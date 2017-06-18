@@ -1,6 +1,7 @@
 package vkapi
 
 import (
+	"errors"
 	"net/url"
 )
 
@@ -12,6 +13,10 @@ const (
 
 	defaultHTTPS    = "1"
 	defaultLanguage = "en"
+
+	paramVersion  = "v"
+	paramLanguage = "lang"
+	paramHTTPS    = "https"
 )
 
 type ApiClient struct {
@@ -33,6 +38,28 @@ type ApiClient struct {
 	// de — German
 	// it — Italian
 	Language string
+}
+
+func (api *ApiClient) SetAccessToken(token string) {
+	api.AccessToken = AccessToken{token,
+		0,
+		0,
+		"",
+		"",
+		url.URL{}}
+}
+
+func (api *ApiClient) Authenticate(application Application) (err error) {
+	api.AccessToken, err = Authenticate(api, application)
+	if err != nil {
+		return err
+	}
+
+	if api.AccessToken.Error != "" {
+		return errors.New(api.AccessToken.ErrorDescription)
+	}
+
+	return nil
 }
 
 var DefaultApiClient = &ApiClient{

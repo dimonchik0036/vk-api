@@ -17,9 +17,7 @@ const (
 
 	defaultClientId     = "3697615"
 	defaultClientSecret = "AlVXZFMUqyrnABp8ncuU"
-)
 
-const (
 	paramGrantType    = "grant_type"
 	paramClientId     = "client_id"
 	paramClientSecret = "client_secret"
@@ -75,7 +73,11 @@ func DefaultApplication(username string, password string, scope int64) (applicat
 	return
 }
 
-func Authenticate(client HTTPClient, application Application) (token AccessToken, err error) {
+func Authenticate(client *ApiClient, application Application) (token AccessToken, err error) {
+	if client.httpClient == nil {
+		return AccessToken{}, errors.New("HttpClient not found")
+	}
+
 	auth := OAuthUrl()
 	q := auth.Query()
 	q.Set(paramGrantType, application.GrantType)
@@ -84,6 +86,10 @@ func Authenticate(client HTTPClient, application Application) (token AccessToken
 	q.Set(paramUsername, application.Username)
 	q.Set(paramPassword, application.Password)
 	q.Set(paramScope, strconv.FormatInt(application.Scope, 10))
+
+	q.Set(paramVersion, client.ApiVersion)
+	q.Set(paramLanguage, client.Language)
+	q.Set(paramHTTPS, client.HTTPS)
 	auth.RawQuery = q.Encode()
 
 	req, err := http.NewRequest(oAuthMethod, auth.String(), nil)
@@ -91,7 +97,7 @@ func Authenticate(client HTTPClient, application Application) (token AccessToken
 		return AccessToken{}, err
 	}
 
-	res, err := client.Do(req)
+	res, err := client.httpClient.Do(req)
 	if err != nil {
 		return AccessToken{}, err
 	}
