@@ -17,13 +17,13 @@ const (
 type ApiClient struct {
 	httpClient  HTTPClient
 	ApiVersion  string
-	ClientToken string
-	SecureToken string
+	AccessToken AccessToken
+	secureToken string
 
 	// HTTPS defines if use https instead of http. 1 - use https. 0 - use http
 	HTTPS string
 
-	// Language defines the language in which different data will be returned, for example, names of countries and cities.
+	// Language defines the language in which different data will be returned, for example, names of countries and cities
 	// ru — Russian
 	// ua — Ukrainian
 	// be — Belarusian
@@ -38,7 +38,7 @@ type ApiClient struct {
 var DefaultApiClient = &ApiClient{
 	defaultHTTPClient(),
 	defaultVersion,
-	"",
+	AccessToken{},
 	"",
 	defaultHTTPS,
 	defaultLanguage,
