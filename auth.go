@@ -24,6 +24,15 @@ const (
 	paramUsername     = "username"
 	paramPassword     = "password"
 	paramScope        = "scope"
+
+	paramPhoneMask      = "phone_mask"
+	paramValidationType = "validation_type"
+	paramCaptchaSid     = "captcha_sid"
+	paramCode           = "code"
+	paramForceSms       = "force_sms"
+	paramNeedCaptcha    = "need_captcha"
+	paramNeedValidation = "need_validation"
+	paramInvalidClient  = "invalid_client"
 )
 
 func OAuthUrl() (url url.URL) {
@@ -59,7 +68,11 @@ type AccessToken struct {
 	UserID           int           `json:"user_id"`
 	Error            string        `json:"error"`
 	ErrorDescription string        `json:"error_description"`
-	RedirectUri      url.URL       `json:"redirect_uri"`
+	RedirectUri      string        `json:"redirect_uri"`
+	CaptchaSid       string        `json:"captcha_sid"`
+	CaptchaImg       string        `json:"captcha_img"`
+	ValidationType   string        `json:"validation_type"` //2fa_sms 2fa_app
+	PhoneMask        string        `json:"phone_mask"`
 }
 
 func DefaultApplication(username string, password string, scope int64) (application Application) {
@@ -86,6 +99,7 @@ func Authenticate(client *ApiClient, application Application) (token AccessToken
 	q.Set(paramUsername, application.Username)
 	q.Set(paramPassword, application.Password)
 	q.Set(paramScope, strconv.FormatInt(application.Scope, 10))
+	//q.Set("test_redirect_uri", "1")
 
 	q.Set(paramVersion, client.ApiVersion)
 	q.Set(paramLanguage, client.Language)

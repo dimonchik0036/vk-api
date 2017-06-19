@@ -46,7 +46,11 @@ func (api *ApiClient) SetAccessToken(token string) {
 		0,
 		"",
 		"",
-		url.URL{}}
+		"",
+		"",
+		"",
+		"",
+		""}
 }
 
 func (api *ApiClient) Authenticate(application Application) (err error) {
@@ -56,7 +60,7 @@ func (api *ApiClient) Authenticate(application Application) (err error) {
 	}
 
 	if api.AccessToken.Error != "" {
-		return errors.New(api.AccessToken.ErrorDescription)
+		return errors.New(api.AccessToken.Error + ":" + api.AccessToken.ErrorDescription)
 	}
 
 	return nil
