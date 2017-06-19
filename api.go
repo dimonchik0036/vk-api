@@ -66,13 +66,17 @@ func (api *ApiClient) Authenticate(application Application) (err error) {
 	return nil
 }
 
-var DefaultApiClient = &ApiClient{
-	defaultHTTPClient(),
-	defaultVersion,
-	AccessToken{},
-	"",
-	defaultHTTPS,
-	defaultLanguage,
+func DefaultApiClient() *ApiClient {
+	client := &ApiClient{
+		defaultHTTPClient(),
+		defaultVersion,
+		AccessToken{},
+		"",
+		defaultHTTPS,
+		defaultLanguage,
+	}
+
+	return client
 }
 
 func ApiUrl() (url url.URL) {

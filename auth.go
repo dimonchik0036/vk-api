@@ -14,9 +14,12 @@ const (
 	oAuthHost   = "oauth.vk.com"
 	oAuthPath   = "token"
 	oAuthMethod = "GET"
-
-	defaultClientId     = "3697615"
-	defaultClientSecret = "AlVXZFMUqyrnABp8ncuU"
+	//defaultClientId = "2274003"                  //VK for Android
+	//defaultClientSecret = "hHbZxrka2uZ6jB1inYsH" //VK for Android
+	//defaultClientId = "3140623"                  //VK for iPhone
+	//defaultClientSecret = "VeWdmVclDCtn6ihuP1nt" //VK for iPhone
+	defaultClientId     = "3697615"              //VK for Windows
+	defaultClientSecret = "AlVXZFMUqyrnABp8ncuU" //VK for Windows
 
 	paramGrantType    = "grant_type"
 	paramClientId     = "client_id"
