@@ -10,6 +10,7 @@ const (
 	defaultScheme  = "https"
 	defaultHost    = "api.vk.com"
 	defaultPath    = "method"
+	defaultMethod  = "GET"
 
 	defaultHTTPS    = "1"
 	defaultLanguage = "en"
@@ -17,16 +18,17 @@ const (
 	paramVersion  = "v"
 	paramLanguage = "lang"
 	paramHTTPS    = "https"
+	paramToken    = "access_token"
 )
 
 type ApiClient struct {
-	httpClient  HTTPClient
-	ApiVersion  string
-	AccessToken AccessToken
-	secureToken string
+	httpClient  HTTPClient   `url:"-"`
+	ApiVersion  string       `url:"v"`
+	AccessToken *AccessToken `url:"-"`
+	secureToken string       `url:"-"`
 
 	// HTTPS defines if use https instead of http. 1 - use https. 0 - use http
-	HTTPS string
+	HTTPS string `url:"https"`
 
 	// Language defines the language in which different data will be returned, for example, names of countries and cities
 	// ru — Russian
@@ -37,11 +39,11 @@ type ApiClient struct {
 	// fi — Finnish
 	// de — German
 	// it — Italian
-	Language string
+	Language string `url:"lang"`
 }
 
 func (api *ApiClient) SetAccessToken(token string) {
-	api.AccessToken = AccessToken{token,
+	api.AccessToken = &AccessToken{token,
 		0,
 		0,
 		"",
@@ -51,6 +53,14 @@ func (api *ApiClient) SetAccessToken(token string) {
 		"",
 		"",
 		""}
+}
+
+func (api *ApiClient) DefaultValues() (values url.Values) {
+	values = url.Values{}
+	values.Add(paramVersion, api.ApiVersion)
+	values.Add(paramLanguage, api.Language)
+	values.Add(paramHTTPS, api.HTTPS)
+	return
 }
 
 func (api *ApiClient) Authenticate(application Application) (err error) {
@@ -70,7 +80,7 @@ func DefaultApiClient() *ApiClient {
 	client := &ApiClient{
 		defaultHTTPClient(),
 		defaultVersion,
-		AccessToken{},
+		nil,
 		"",
 		defaultHTTPS,
 		defaultLanguage,

@@ -47,22 +47,22 @@ func OAuthUrl() (url url.URL) {
 
 type Application struct {
 	// GrantType - Authorization type, must be equal to `password`
-	GrantType string `json:"grant_type"`
+	GrantType string `json:"grant_type" url:"grant_type,omitempty"`
 
 	// ClientId - Id of your application
-	ClientId string `json:"client_id"`
+	ClientId string `json:"client_id" url:"client_id,omitempty"`
 
 	// ClientSecret - Secret key of your application
-	ClientSecret string `json:"client_secret"`
+	ClientSecret string `json:"client_secret" url:"client_secret,omitempty"`
 
 	// Username - User username
-	Username string `json:"username"`
+	Username string `json:"username" url:"username,omitempty"`
 
 	// Password - User password
-	Password string `json:"password"`
+	Password string `json:"password" url:"password,omitempty"`
 
 	// Scope - Access rights required by the application
-	Scope int64 `json:"scope"`
+	Scope int64 `json:"scope" url:"scope,omitempty"`
 }
 
 type AccessToken struct {
@@ -89,9 +89,9 @@ func DefaultApplication(username string, password string, scope int64) (applicat
 	return
 }
 
-func Authenticate(client *ApiClient, application Application) (token AccessToken, err error) {
+func Authenticate(client *ApiClient, application Application) (token *AccessToken, err error) {
 	if client.httpClient == nil {
-		return AccessToken{}, errors.New("HttpClient not found")
+		return nil, errors.New("HttpClient not found")
 	}
 
 	auth := OAuthUrl()
@@ -111,21 +111,21 @@ func Authenticate(client *ApiClient, application Application) (token AccessToken
 
 	req, err := http.NewRequest(oAuthMethod, auth.String(), nil)
 	if err != nil {
-		return AccessToken{}, err
+		return nil, err
 	}
 
 	res, err := client.httpClient.Do(req)
 	if err != nil {
-		return AccessToken{}, err
+		return nil, err
 	}
 
 	/*if res.StatusCode != http.StatusOK {
 		return AccessToken{}, errors.New("StatusCode != StatusOK")
 	}*/
 
-	err = json.NewDecoder(res.Body).Decode(&token)
+	err = json.NewDecoder(res.Body).Decode(token)
 	if err != nil {
-		return AccessToken{}, err
+		return nil, err
 	}
 
 	return
