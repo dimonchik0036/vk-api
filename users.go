@@ -1,5 +1,40 @@
 package vkapi
 
+import (
+	"encoding/json"
+	"log"
+	"net/url"
+	"strings"
+)
+
+func (client *Client) UsersInfo(userIds []string, fieldArgs []string) (user *[]Users, err error) {
+	user = new([]Users)
+	args := strings.Join(fieldArgs, ",")
+	ids := strings.Join(userIds, ",")
+
+	var req Request
+	req.Method = "users.get"
+	req.Values = url.Values{}
+	req.Values.Set("user_ids", ids)
+	req.Values.Set("fields", args)
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.ServerError() != nil {
+		return nil, res.ServerError()
+	}
+
+	log.Println("Answer:", res.Response.String())
+
+	if err := json.Unmarshal(res.Response.Bytes(), user); err != nil {
+		return nil, err
+	}
+
+	return
+}
+
 type Users struct {
 	// Full description at https://vk.com/dev/objects/user
 	Id          int    `json:"id"`
@@ -20,7 +55,7 @@ type Users struct {
 	CanSeeAudio            int             `json:"can_see_audio"`
 	CanSendFriendRequest   int             `json:"can_send_friend_request"`
 	CanWritePrivateMessage int             `json:"can_write_private_message"`
-	Career                 *Career         `json:"career"`
+	Career                 *[]Career         `json:"career"`
 	City                   *City           `json:"city"`
 	CommonCount            int             `json:"common_count"`
 	Skype                  string          `json:"skype"`
@@ -62,7 +97,7 @@ type Users struct {
 	LastNameAbl            string          `json:"last_name_abl"`
 	LastSeen               *LastSeen       `json:"last_seen"`
 	MaidenName             string          `json:"maiden_name"`
-	Military               *Military       `json:"military"`
+	Military               *[]Military       `json:"military"`
 	Movies                 string          `json:"movies"`
 	Music                  string          `json:"music"`
 	Nickname               string          `json:"nickname"`
@@ -210,3 +245,78 @@ type Universities struct {
 	EducationForm   string `json:"education_form"`
 	EducationStatus string `json:"education_status"`
 }
+
+var AllFields = []string{"about",
+	"activities",
+	"bdate",
+	"blacklisted",
+	"blacklisted_by_me",
+	"books",
+	"can_post",
+	"can_see_all_posts",
+	"can_see_audio",
+	"can_send_friend_request",
+	"can_write_private_message",
+	"career",
+	"city",
+	"common_count",
+	"connections",
+	"contacts",
+	"counters",
+	"country",
+	"crop_photo",
+	"domain",
+	"education",
+	"first_name_nom",
+	"first_name_gen",
+	"first_name_dat",
+	"first_name_acc",
+	"first_name_ins",
+	"first_name_abl",
+	"followers_count",
+	"friend_status",
+	"games",
+	"has_mobile",
+	"hasPhoto",
+	"home_town",
+	"interests",
+	"is_favorite",
+	"is_friend",
+	"is_hidden_from_feed",
+	"last_name_nom",
+	"last_name_gen",
+	"last_name_dat",
+	"last_name_acc",
+	"last_name_ins",
+	"last_name_abl",
+	"last_seen",
+	"maiden_name",
+	"military",
+	"movies",
+	"music",
+	"nickname",
+	"occupation",
+	"online",
+	"personal",
+	"photo_50",
+	"photo_100",
+	"photo_200_orig",
+	"photo_200",
+	"photo_400_orig",
+	"photo_id",
+	"photo_max",
+	"photo_max_orig",
+	"quotes",
+	"relatives",
+	"relation",
+	"schools",
+	"screen_name",
+	"sex",
+	"site",
+	"status",
+	"status_audio",
+	"timezone",
+	"tv",
+	"universities",
+	"verified",
+	"wall_comments"}
