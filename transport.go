@@ -102,8 +102,8 @@ func (api *ApiClient) Do(request Request) (response *Response, err error) {
 func (r Request) HTTP() (req *http.Request) {
 	values := r.Values
 
-	if r.Token != "" && values.Get(paramToken) == "" {
-		values.Add(paramToken, r.Token)
+	if r.Token != "" {
+		values.Set(paramToken, r.Token)
 	}
 
 	u := ApiUrl()

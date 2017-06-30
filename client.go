@@ -18,7 +18,7 @@ type Client struct {
 	//	BoardComment
 }
 
-func DefaultClientFromToken(token string) (client *Client, err error) {
+func DefaultClientFromToken(token string) (client *Client) {
 	client = new(Client)
 	client.apiClient = DefaultApiClient()
 	client.apiClient.SetAccessToken(token)
