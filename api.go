@@ -55,7 +55,8 @@ func (api *ApiClient) SetAccessToken(token string) {
 		""}
 }
 
-func (api *ApiClient) DefaultValues() (values url.Values) {
+// Values - Returning the default values from this api
+func (api *ApiClient) Values() (values url.Values) {
 	values = url.Values{}
 	values.Add(paramVersion, api.ApiVersion)
 	values.Add(paramLanguage, api.Language)

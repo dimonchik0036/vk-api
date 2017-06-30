@@ -5,44 +5,46 @@ import (
 	"strings"
 )
 
+type ServerError int
+
 const (
 	// Full description at https://vk.com/dev/errors
-	ErrZero = iota
-	ErrUnknown
-	ErrApplicationDisabled
-	ErrUnknownMethod
-	ErrInvalidSignature
-	ErrAuthFailed
-	ErrTooManyRequests
-	ErrInsufficientPermissions
-	ErrInvalidRequest
-	ErrTooManyOneTypeRequests
-	ErrInternalServerError
-	ErrAppInTestMode
-	ErrCaptchaNeeded             = 14
-	ErrNotAllowed                = 15
-	ErrHttpsOnly                 = 16
-	ErrNeedValidation            = 17
-	ErrUserDeletedOrBlocked      = 18
-	ErrStandaloneOnly            = 20
-	ErrStandaloneOpenAPIOnly     = 21
-	ErrMethodDisabled            = 23
-	ErrNeedConfirmation          = 24
-	ErrCommunityKeyInvalid       = 27
-	ErrApplicationKeyInvalid     = 28
-	ErrOneOfParametersInvalid    = 100
-	ErrInvalidAPIID              = 101
-	ErrInvalidAUserID            = 113
-	ErrInvalidTimestamp          = 150
-	ErrAlbumAccessProhibited     = 200
-	ErrAudioAccessProhibited     = 201
-	ErrGroupAccessProhibited     = 203
-	ErrAlbumOverflow             = 300
-	ErrEnableVoiceApplication    = 500
-	ErrInsufficientPermissionsAd = 600
-	ErrInternalServerErrorAd     = 603
+	ErrZero                      ServerError = 0
+	ErrUnknown                   ServerError = 1
+	ErrApplicationDisabled       ServerError = 2
+	ErrUnknownMethod             ServerError = 3
+	ErrInvalidSignature          ServerError = 4
+	ErrAuthFailed                ServerError = 5
+	ErrTooManyRequests           ServerError = 6
+	ErrInsufficientPermissions   ServerError = 7
+	ErrInvalidRequest            ServerError = 8
+	ErrTooManyOneTypeRequests    ServerError = 9
+	ErrInternalServerError       ServerError = 10
+	ErrAppInTestMode             ServerError = 11
+	ErrCaptchaNeeded             ServerError = 14
+	ErrNotAllowed                ServerError = 15
+	ErrHttpsOnly                 ServerError = 16
+	ErrNeedValidation            ServerError = 17
+	ErrUserDeletedOrBlocked      ServerError = 18
+	ErrStandaloneOnly            ServerError = 20
+	ErrStandaloneOpenAPIOnly     ServerError = 21
+	ErrMethodDisabled            ServerError = 23
+	ErrNeedConfirmation          ServerError = 24
+	ErrCommunityKeyInvalid       ServerError = 27
+	ErrApplicationKeyInvalid     ServerError = 28
+	ErrOneOfParametersInvalid    ServerError = 100
+	ErrInvalidAPIID              ServerError = 101
+	ErrInvalidAUserID            ServerError = 113
+	ErrInvalidTimestamp          ServerError = 150
+	ErrAlbumAccessProhibited     ServerError = 200
+	ErrAudioAccessProhibited     ServerError = 201
+	ErrGroupAccessProhibited     ServerError = 203
+	ErrAlbumOverflow             ServerError = 300
+	ErrEnableVoiceApplication    ServerError = 500
+	ErrInsufficientPermissionsAd ServerError = 600
+	ErrInternalServerErrorAd     ServerError = 603
 
-	ErrBadResponseCode = -1
+	ErrBadResponseCode ServerError = -1
 )
 
 type Errors []ExecuteError
@@ -54,8 +56,6 @@ func (e Errors) Error() string {
 	}
 	return fmt.Sprintln("Execute errors:", strings.Join(s, ", "))
 }
-
-type ServerError int
 
 type RequestParam struct {
 	Key   string `json:"key"`
@@ -69,10 +69,12 @@ type ExecuteError struct {
 }
 
 type Error struct {
-	Code    ServerError    `json:"error_code,omitempty"`
-	Message string         `json:"error_msg,omitempty"`
-	Params  []RequestParam `json:"request_params,omitempty"`
-	Request Request        `json:"-"`
+	Code       ServerError     `json:"error_code,omitempty"`
+	Message    string          `json:"error_msg,omitempty"`
+	Params     *[]RequestParam `json:"request_params,omitempty"`
+	CaptchaSid string          `json:"captcha_sid,omitempty"`
+	CaptchaImg string          `json:"captcha_img,omitempty"`
+	Request    Request         `json:"-"`
 }
 
 func (e *Error) setRequest(r Request) {
@@ -100,26 +102,12 @@ func (e ServerError) Is(err error) bool {
 	return false
 }
 
-func IsServerError(err error) bool {
-	if _, ok := err.(Error); ok {
-		return true
-	}
-	return false
-}
-
-func GetServerError(err error) Error {
-	if s, ok := err.(Error); ok {
-		return s
-	}
-	panic("not a server error")
-}
-
 type ErrorResponse struct {
 	Error Error `json:"error"`
 }
 
 func (s ServerError) String() string {
-	return string(s)
+	return fmt.Sprintf("%d", s)
 }
 
 func (s ServerError) Error() string {

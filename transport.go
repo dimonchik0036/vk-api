@@ -24,8 +24,8 @@ const (
 
 type Response struct {
 	Errors   Errors `json:"execute_errors,omitempty"`
-	Error    `json:"error,omitempty"`
-	Response Raw `json:"response,omitempty"`
+	Error    Error  `json:"error,omitempty"`
+	Response Raw    `json:"response,omitempty"`
 }
 
 type Request struct {
@@ -65,7 +65,7 @@ func must(err error) {
 }
 
 func (api *ApiClient) Do(request Request) (response *Response, err error) {
-	for i, v := range api.DefaultValues() {
+	for i, v := range api.Values() {
 		if request.Values.Get(i) == "" {
 			request.Values.Add(i, v[0])
 		}
@@ -102,7 +102,7 @@ func (api *ApiClient) Do(request Request) (response *Response, err error) {
 func (r Request) HTTP() (req *http.Request) {
 	values := r.Values
 
-	if len(r.Token) != 0 {
+	if r.Token != "" && values.Get(paramToken) == "" {
 		values.Add(paramToken, r.Token)
 	}
 
@@ -158,6 +158,7 @@ func (d vkResponseProcessor) To(response *Response) error {
 	}
 
 	decoder := json.NewDecoder(d.input)
+
 	if err := decoder.Decode(response); err != nil {
 		return err
 	}

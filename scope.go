@@ -20,4 +20,6 @@ const (
 	ScopeStats          = 1048576
 	ScopeEmail          = 4194304
 	ScopeMarket         = 134217728
+
+	ScopeAll = ScopeFriends | ScopePhotos | ScopeAudio | ScopeVideo | ScopePages | ScopeAddLink | ScopeStatus | ScopeNotes | ScopeMessages | ScopeWall | ScopeAds | ScopeOffline | ScopeDocs | ScopeGroupsOrManage | ScopeNotifications | ScopeStats | ScopeEmail | ScopeMarket
 )

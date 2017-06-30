@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"time"
 )
 
 const (
@@ -65,49 +64,54 @@ type Application struct {
 	Scope int64 `json:"scope" url:"scope,omitempty"`
 }
 
-type AccessToken struct {
-	AccessToken      string        `json:"access_token"`
-	ExpiresIn        time.Duration `json:"expires_in"`
-	UserID           int           `json:"user_id"`
-	Error            string        `json:"error"`
-	ErrorDescription string        `json:"error_description"`
-	RedirectUri      string        `json:"redirect_uri"`
-	CaptchaSid       string        `json:"captcha_sid"`
-	CaptchaImg       string        `json:"captcha_img"`
-	ValidationType   string        `json:"validation_type"` //2fa_sms 2fa_app
-	PhoneMask        string        `json:"phone_mask"`
-}
-
-func DefaultApplication(username string, password string, scope int64) (application Application) {
-	application.GrantType = "password"
-	application.Username = username
-	application.Password = password
-	application.Scope = scope
-	application.ClientId = defaultClientId
-	application.ClientSecret = defaultClientSecret
+func (app *Application) Values() (values url.Values) {
+	values = url.Values{}
+	values.Set(paramGrantType, app.GrantType)
+	values.Set(paramClientId, app.ClientId)
+	values.Set(paramClientSecret, app.ClientSecret)
+	values.Set(paramUsername, app.Username)
+	values.Set(paramPassword, app.Password)
+	values.Set(paramScope, strconv.FormatInt(app.Scope, 10))
 
 	return
 }
 
-func Authenticate(client *ApiClient, application Application) (token *AccessToken, err error) {
+type AccessToken struct {
+	AccessToken      string `json:"access_token"`
+	ExpiresIn        int64  `json:"expires_in"`
+	UserID           int    `json:"user_id"`
+	Error            string `json:"error"`
+	ErrorDescription string `json:"error_description"`
+	RedirectUri      string `json:"redirect_uri"`
+	CaptchaSid       string `json:"captcha_sid"`
+	CaptchaImg       string `json:"captcha_img"`
+	ValidationType   string `json:"validation_type"` //2fa_sms 2fa_app
+	PhoneMask        string `json:"phone_mask"`
+}
+
+func DefaultApplication(username string, password string, scope int64) (app Application) {
+	app.GrantType = "password"
+	app.Username = username
+	app.Password = password
+	app.Scope = scope
+	app.ClientId = defaultClientId
+	app.ClientSecret = defaultClientSecret
+
+	return
+}
+
+func Authenticate(client *ApiClient, app Application) (token *AccessToken, err error) {
+	token = new(AccessToken)
 	if client.httpClient == nil {
 		return nil, errors.New("HttpClient not found")
 	}
-
 	auth := OAuthUrl()
-	q := auth.Query()
-	q.Set(paramGrantType, application.GrantType)
-	q.Set(paramClientId, application.ClientId)
-	q.Set(paramClientSecret, application.ClientSecret)
-	q.Set(paramUsername, application.Username)
-	q.Set(paramPassword, application.Password)
-	q.Set(paramScope, strconv.FormatInt(application.Scope, 10))
-	//q.Set("test_redirect_uri", "1")
 
-	q.Set(paramVersion, client.ApiVersion)
-	q.Set(paramLanguage, client.Language)
-	q.Set(paramHTTPS, client.HTTPS)
-	auth.RawQuery = q.Encode()
+	q := ConcatValues(false, auth.Query(), app.Values(), client.Values())
+	//q.Set("test_redirect_uri", "1")
+	if q != nil {
+		auth.RawQuery = q.Encode()
+	}
 
 	req, err := http.NewRequest(oAuthMethod, auth.String(), nil)
 	if err != nil {

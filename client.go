@@ -10,8 +10,8 @@ type Client struct {
 	//	Group
 	//	Wall
 	//	WallComment
-	Message string
-	Chat    string
+	//  Message
+	//  Chat
 	//	Note
 	//	Page
 	//	Board
@@ -41,7 +41,7 @@ func (client *Client) Do(request Request) (response *Response, err error) {
 		return nil, errors.New("ApiClient not found")
 	}
 
-	if client.apiClient.AccessToken != nil {
+	if request.Token == "" && client.apiClient.AccessToken != nil {
 		request.Token = client.apiClient.AccessToken.AccessToken
 	}
 

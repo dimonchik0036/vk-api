@@ -55,7 +55,7 @@ type Users struct {
 	CanSeeAudio            int             `json:"can_see_audio"`
 	CanSendFriendRequest   int             `json:"can_send_friend_request"`
 	CanWritePrivateMessage int             `json:"can_write_private_message"`
-	Career                 *[]Career         `json:"career"`
+	Career                 *[]Career       `json:"career"`
 	City                   *City           `json:"city"`
 	CommonCount            int             `json:"common_count"`
 	Skype                  string          `json:"skype"`
@@ -97,7 +97,7 @@ type Users struct {
 	LastNameAbl            string          `json:"last_name_abl"`
 	LastSeen               *LastSeen       `json:"last_seen"`
 	MaidenName             string          `json:"maiden_name"`
-	Military               *[]Military       `json:"military"`
+	Military               *[]Military     `json:"military"`
 	Movies                 string          `json:"movies"`
 	Music                  string          `json:"music"`
 	Nickname               string          `json:"nickname"`
