@@ -3,6 +3,7 @@ package vkapi
 type Client struct {
 	apiClient *ApiClient
 	User      *Users
+	LongPoll  *LongPoll
 	//	Group
 	//	Wall
 	//	WallComment
