@@ -1,8 +1,12 @@
 package vkapi
 
-import "net/url"
+import (
+	"net/url"
+	"strconv"
+	"strings"
+)
 
-//ConcatValues - Concatenating values
+// ConcatValues - Concatenating values
 func ConcatValues(unite bool, values ...url.Values) (result url.Values) {
 	result = url.Values{}
 	for _, v := range values {
@@ -17,4 +21,14 @@ func ConcatValues(unite bool, values ...url.Values) (result url.Values) {
 	}
 
 	return result
+}
+
+// ConcatInt64ToString - Concatenating array int64 to string
+func ConcatInt64ToString(numbers []int64) string {
+	var str []string
+	for _, u := range numbers {
+		str = append(str, strconv.FormatInt(u, 10))
+	}
+
+	return strings.Join(str, ",")
 }

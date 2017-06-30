@@ -1,5 +1,15 @@
 package vkapi
 
+import (
+	"fmt"
+	"net/url"
+	"strconv"
+)
+
+const (
+	chatOffset = 2000000000
+)
+
 type Dialog struct {
 	Unread     int64    `json:"unread"`
 	Message    *Message `json:"message"`
@@ -9,14 +19,30 @@ type Dialog struct {
 }
 
 type Message struct {
-	Id        int64  `json:"id"`
-	UserId    int64  `json:"user_id"`
-	FromId    int64  `json:"from_id"`
-	Date      int64  `json:"date"`
-	ReadState int    `json:"read_state"`
-	Out       int    `json:"out"`
-	Title     string `json:"title"`
-	Body      string `json:"body"`
+	Id          int64      `json:"id"`
+	UserId      int64      `json:"user_id"`
+	FromId      int64      `json:"from_id"`
+	Date        int64      `json:"date"`
+	ReadState   int        `json:"read_state"`
+	Out         int        `json:"out"`
+	Title       string     `json:"title"`
+	Body        string     `json:"body"`
+	FwdMessages *[]Message `json:"fwd_messages"`
+	Emoji       int        `json:"emoji"`
+	Important   int        `json:"important"`
+	Deleted     int        `json:"deleted"`
+	RandomId    int64      `json:"random_id"`
+	ChatId      int64      `json:"chat_id"`
+	ChatActive  []int64    `json:"chat_active"`
+	UsersCount  int        `json:"users_count"`
+	AdminId     int64      `json:"admin_id"`
+	Action      string     `json:"action"`
+	ActionMid   int64      `json:"action_mid"`   /*идентификатор пользователя (если > 0) или email (если < 0), которого пригласили или исключили (для служебных сообщений с action = chat_invite_user или chat_kick_user). */
+	ActionEmail string     `json:"action_email"` /*email, который пригласили или исключили (для служебных сообщений с action = chat_invite_user или chat_kick_user и отрицательным action_mid). */
+	ActionText  string     `json:"action_text"`  /*название беседы (для служебных сообщений с action = chat_create или chat_title_update). */
+	Photo50     string     `json:"photo_50"`
+	Photo100    string     `json:"photo_100"`
+	Photo200    string     `json:"photo_200"`
 	/*Geo       *Geo {
 		type (string) — тип места;
 		coordinates (string) — координаты места;
@@ -32,18 +58,7 @@ type Message struct {
 	} `json:"geo"`*/
 
 	/*Attachments *[]Attachments `json:"attachments"`*/
-	FwdMessages *[]Message `json:"fwd_messages"`
-	Emoji       int        `json:"emoji"`
-	Important   int        `json:"important"`
-	Deleted     int        `json:"deleted"`
-	RandomId    int64      `json:"random_id"`
-
-	ChatId     int64   `json:"chat_id"`
-	ChatActive []int64 `json:"chat_active"`
 	/*PushSettings *PushSettings { настройки уведомлений для беседы, если они есть.	} `json:"push_settings"`*/
-	UsersCount int    `json:"users_count"`
-	AdminId    int64  `json:"admin_id"`
-	Action     string `json:"action"`
 	/*string	тип действия (если это служебное сообщение). Возможные значения:
 
 	  chat_photo_update — обновлена фотография беседы;
@@ -53,10 +68,104 @@ type Message struct {
 	  chat_invite_user — приглашен пользователь;
 	  chat_kick_user — исключен пользователь.*/
 
-	ActionMid   int64  `json:"action_mid"`   /*идентификатор пользователя (если > 0) или email (если < 0), которого пригласили или исключили (для служебных сообщений с action = chat_invite_user или chat_kick_user). */
-	ActionEmail string `json:"action_email"` /*email, который пригласили или исключили (для служебных сообщений с action = chat_invite_user или chat_kick_user и отрицательным action_mid). */
-	ActionText  string `json:"action_text"`  /*название беседы (для служебных сообщений с action = chat_create или chat_title_update). */
-	Photo50     string `json:"photo_50"`
-	Photo100    string `json:"photo_100"`
-	Photo200    string `json:"photo_200"`
+}
+
+type MessageConfig struct {
+	UserId          int64   `json:"user_id"`
+	RandomId        int64   `json:"random_id"`
+	PeerId          int64   `json:"peer_id"`
+	Domain          string  `json:"domain"`
+	ChatId          int64   `json:"chat_id"`
+	UserIds         []int64 `json:"user_ids"`
+	Message         string  `json:"message"`
+	geo             bool    `json:"-"`
+	lat             float64 `json:"lat"`
+	long            float64 `json:"long"`
+	ForwardMessages []int64 `json:"forward_messages"`
+	StickerId       int64   `json:"sticker_id"`
+	AccessToken     string  `json:"access_token"`
+	//attachment *[]Attachment `json:"attachment"`
+}
+
+func (m *MessageConfig) SetGeo(lat float64, long float64) {
+	m.geo = true
+	m.lat = lat
+	m.long = long
+}
+
+func NewMessage(id int64, message string) (config MessageConfig) {
+	config.PeerId = id
+	config.Message = message
+	return
+}
+
+func NewMessageToChat(id int64, message string) (config MessageConfig) {
+	return NewMessage(id+chatOffset, message)
+}
+
+func NewMessageToUsers(message string, ids ...int64) (config MessageConfig) {
+	config.UserIds = ids
+	config.Message = message
+	return
+}
+
+func (client *Client) SendMessage(config MessageConfig) (int64, *Error) {
+	var req Request
+	req.Token = config.AccessToken
+	req.Method = "messages.send"
+	v := url.Values{}
+
+	if config.PeerId != 0 {
+		v.Add("peer_id", fmt.Sprintf("%d", config.PeerId))
+	}
+
+	if config.UserId != 0 {
+		v.Add("user_id", fmt.Sprintf("%d", config.UserId))
+	}
+
+	if config.Domain != "" {
+		v.Add("domain", config.Domain)
+	}
+
+	if config.ChatId != 0 {
+		v.Add("chat_id", fmt.Sprintf("%d", config.RandomId))
+	}
+
+	if len(config.UserIds) != 0 {
+		v.Add("user_ids", ConcatInt64ToString(config.UserIds))
+	}
+
+	if len(config.ForwardMessages) != 0 {
+		v.Add("forward_messages", ConcatInt64ToString(config.ForwardMessages))
+	}
+
+	if config.StickerId != 0 {
+		v.Add("sticker_id", fmt.Sprintf("%d", config.StickerId))
+	}
+
+	if config.Message != "" {
+		v.Add("message", config.Message)
+	}
+
+	if config.RandomId != 0 {
+		v.Add("random_id", fmt.Sprintf("%d", config.RandomId))
+	}
+
+	if config.geo {
+		v.Add("lat", strconv.FormatFloat(config.lat, 'f', -1, 64))
+		v.Add("long", strconv.FormatFloat(config.long, 'f', -1, 64))
+	}
+
+	req.Values = v
+	res, err := client.Do(req)
+	if err != nil && !err.Code.Is(ErrZero) {
+		return 0, err
+	}
+
+	answer, error := strconv.ParseInt(res.Response.String(), 10, 64)
+	if error != nil {
+		return 0, NewError(ErrBadResponseCode, error.Error())
+	}
+
+	return answer, nil
 }
