@@ -49,6 +49,7 @@ const (
 	ErrPrivacy               ServerError = 902
 
 	ErrBadResponseCode ServerError = -1
+	ErrBadCode         ServerError = -666
 )
 
 type Errors []ExecuteError
@@ -81,6 +82,13 @@ type Error struct {
 	Request    Request         `json:"-"`
 }
 
+func NewError(code ServerError, description string) (err *Error) {
+	err = new(Error)
+	err.Code = code
+	err.Message = description
+
+	return
+}
 func (e *Error) setRequest(r Request) {
 	e.Request = r
 }

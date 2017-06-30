@@ -1,9 +1,5 @@
 package vkapi
 
-import (
-	"errors"
-)
-
 type Client struct {
 	apiClient *ApiClient
 	User      *Users
@@ -36,9 +32,9 @@ func DefaultClientFromLogin(username string, password string, scope int64) (clie
 	return
 }
 
-func (client *Client) Do(request Request) (response *Response, err error) {
+func (client *Client) Do(request Request) (response *Response, err *Error) {
 	if client.apiClient == nil {
-		return nil, errors.New("ApiClient not found")
+		return nil, NewError(ErrBadCode, "ApiClient not found")
 	}
 
 	if request.Token == "" && client.apiClient.AccessToken != nil {

@@ -64,7 +64,7 @@ func must(err error) {
 	}
 }
 
-func (api *ApiClient) Do(request Request) (response *Response, err error) {
+func (api *ApiClient) Do(request Request) (response *Response, error *Error) {
 	for i, v := range api.Values() {
 		if request.Values.Get(i) == "" {
 			request.Values.Add(i, v[0])
@@ -76,6 +76,10 @@ func (api *ApiClient) Do(request Request) (response *Response, err error) {
 	log.Println("DO", request.Method)
 
 	var res *http.Response
+	var err interface {
+		Error() string
+	}
+
 	for attempt := 1; attempt < 5; attempt++ {
 		res, err = api.httpClient.Do(req)
 		if err == nil {
@@ -88,12 +92,12 @@ func (api *ApiClient) Do(request Request) (response *Response, err error) {
 
 	if err != nil {
 		log.Println("HTTP fatal", err)
-		return nil, err
+		return nil, NewError(ErrBadCode, "HTTP fatal "+err.Error())
 	}
 
 	log.Println("HTTP", res.Status, time.Now().Sub(start))
 	if res.StatusCode != http.StatusOK {
-		return nil, errors.New(string(ErrBadResponseCode))
+		return nil, NewError(ErrBadResponseCode, res.Status)
 	}
 
 	return Process(res.Body)
@@ -152,7 +156,7 @@ func (r Response) ServerError() error {
 	return r.Error
 }
 
-func (d vkResponseProcessor) To(response *Response) error {
+func (d vkResponseProcessor) To(response *Response) *Error {
 	if rc, ok := d.input.(io.ReadCloser); ok {
 		defer rc.Close()
 	}
@@ -160,13 +164,13 @@ func (d vkResponseProcessor) To(response *Response) error {
 	decoder := json.NewDecoder(d.input)
 
 	if err := decoder.Decode(response); err != nil {
-		return err
+		return NewError(ErrBadCode, err.Error())
 	}
 
-	return response.ServerError()
+	return &response.Error
 }
 
-func Process(input io.Reader) (response *Response, err error) {
+func Process(input io.Reader) (response *Response, err *Error) {
 	response = new(Response)
 	return response, vkResponseProcessor{input}.To(response)
 }
