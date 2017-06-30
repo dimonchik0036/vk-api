@@ -44,6 +44,10 @@ const (
 	ErrInsufficientPermissionsAd ServerError = 600
 	ErrInternalServerErrorAd     ServerError = 603
 
+	ErrInBlackList           ServerError = 900
+	ErrNotAllowedToSendFirst ServerError = 901
+	ErrPrivacy               ServerError = 902
+
 	ErrBadResponseCode ServerError = -1
 )
 
