@@ -23,9 +23,9 @@ const (
 )
 
 type Response struct {
-	Errors   Errors `json:"execute_errors,omitempty"`
-	Error    Error  `json:"error,omitempty"`
-	Response Raw    `json:"response,omitempty"`
+	Errors   *Errors `json:"execute_errors,omitempty"`
+	Error    *Error  `json:"error,omitempty"`
+	Response Raw     `json:"response,omitempty"`
 }
 
 type Request struct {
@@ -167,7 +167,7 @@ func (d vkResponseProcessor) To(response *Response) *Error {
 		return NewError(ErrBadCode, err.Error())
 	}
 
-	return &response.Error
+	return response.Error
 }
 
 func Process(input io.Reader) (response *Response, err *Error) {
