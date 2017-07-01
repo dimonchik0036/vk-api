@@ -1,16 +1,14 @@
 package vkapi
 
 import (
-	"encoding/json"
 	"errors"
-	"log"
 	"net/url"
 	"strings"
 )
 
 // UsersInfo returns array Users with the selected fields
 // if the request was successful.
-func (client *Client) UsersInfo(userIds []string, fieldArgs []string) (users []Users, err *Error) {
+func (client *Client) UsersInfo(userIds []string, fieldArgs ...string) (users []Users, err *Error) {
 	var req Request
 	req.Method = "users.get"
 	req.Values = url.Values{}
@@ -20,7 +18,7 @@ func (client *Client) UsersInfo(userIds []string, fieldArgs []string) (users []U
 		req.Values.Set("user_ids", ids)
 	}
 
-	if len(userIds) > 0 {
+	if len(fieldArgs) > 0 {
 		args := strings.Join(fieldArgs, ",")
 		req.Values.Set("fields", args)
 	}
@@ -30,9 +28,7 @@ func (client *Client) UsersInfo(userIds []string, fieldArgs []string) (users []U
 		return nil, err
 	}
 
-	log.Println("Answer:", res.Response.String())
-
-	if err := json.Unmarshal(res.Response.Bytes(), &users); err != nil {
+	if err := res.To(&users); err != nil {
 		return nil, NewError(ErrBadCode, err.Error())
 	}
 
@@ -40,8 +36,8 @@ func (client *Client) UsersInfo(userIds []string, fieldArgs []string) (users []U
 }
 
 // InitMyProfile fills in the selected Client.User data.
-func (client *Client) InitMyProfile(fieldArgs []string) error {
-	users, err := client.UsersInfo([]string{}, fieldArgs)
+func (client *Client) InitMyProfile(fieldArgs ...string) error {
+	users, err := client.UsersInfo([]string{}, fieldArgs...)
 	if err != nil {
 		return err
 	}
@@ -266,77 +262,154 @@ type Universities struct {
 	EducationStatus string `json:"education_status"`
 }
 
-var AllFields = []string{"about",
-	"activities",
-	"bdate",
-	"blacklisted",
-	"blacklisted_by_me",
-	"books",
-	"can_post",
-	"can_see_all_posts",
-	"can_see_audio",
-	"can_send_friend_request",
-	"can_write_private_message",
-	"career",
-	"city",
-	"common_count",
-	"connections",
-	"contacts",
-	"counters",
-	"country",
-	"crop_photo",
-	"domain",
-	"education",
-	"first_name_nom",
-	"first_name_gen",
-	"first_name_dat",
-	"first_name_acc",
-	"first_name_ins",
-	"first_name_abl",
-	"followers_count",
-	"friend_status",
-	"games",
-	"has_mobile",
-	"hasPhoto",
-	"home_town",
-	"interests",
-	"is_favorite",
-	"is_friend",
-	"is_hidden_from_feed",
-	"last_name_nom",
-	"last_name_gen",
-	"last_name_dat",
-	"last_name_acc",
-	"last_name_ins",
-	"last_name_abl",
-	"last_seen",
-	"maiden_name",
-	"military",
-	"movies",
-	"music",
-	"nickname",
-	"occupation",
-	"online",
-	"personal",
-	"photo_50",
-	"photo_100",
-	"photo_200_orig",
-	"photo_200",
-	"photo_400_orig",
-	"photo_id",
-	"photo_max",
-	"photo_max_orig",
-	"quotes",
-	"relatives",
-	"relation",
-	"schools",
-	"screen_name",
-	"sex",
-	"site",
-	"status",
-	"status_audio",
-	"timezone",
-	"tv",
-	"universities",
-	"verified",
-	"wall_comments"}
+const (
+	UserFieldAbout                  = "about"
+	UserFieldActivities             = "activities"
+	UserFieldBirthdayDate           = "bdate"
+	UserFieldBlacklisted            = "blacklisted"
+	UserFieldBlacklistedByMe        = "blacklisted_by_me"
+	UserFieldBoks                   = "books"
+	UserFieldCanPost                = "can_post"
+	UserFieldCanSeeAllPosts         = "can_see_all_posts"
+	UserFieldCanSeeAudio            = "can_see_audio"
+	UserFieldCanSendFriendRequest   = "can_send_friend_request"
+	UserFieldCanWritePrivateMessage = "can_write_private_message"
+	UserFieldCarrer                 = "career"
+	UserFieldCity                   = "city"
+	UserFieldCommonCount            = "common_count"
+	UserFieldConnections            = "connections"
+	UserFieldContacts               = "contacts"
+	UserFieldCounters               = "counters"
+	UserFieldCountry                = "country"
+	UserFieldCropPhoto              = "crop_photo"
+	UserFieldDomain                 = "domain"
+	UserFieldEducation              = "education"
+	UserFieldFirstNameNom           = "first_name_nom"
+	UserFieldFirstNameGen           = "first_name_gen"
+	UserFieldFirstNameDat           = "first_name_dat"
+	UserFieldFirstNameAcc           = "first_name_acc"
+	UserFieldFirstNameIns           = "first_name_ins"
+	UserFieldFirstNameAbl           = "first_name_abl"
+	UserFieldFollowersCount         = "followers_count"
+	UserFieldFriendStatus           = "friend_status"
+	UserFieldGames                  = "games"
+	UserFieldHasMobile              = "has_mobile"
+	UserFieldHasPhoto               = "hasPhoto"
+	UserFieldHomeTown               = "home_town"
+	UserFieldInterests              = "interests"
+	UserFieldIsFavorite             = "is_favorite"
+	UserFieldIsFriend               = "is_friend"
+	UserFieldIsHiddenFromFeed       = "is_hidden_from_feed"
+	UserFieldLastNameNom            = "last_name_nom"
+	UserFieldLastNameGen            = "last_name_gen"
+	UserFieldLastNameDat            = "last_name_dat"
+	UserFieldLastNameAcc            = "last_name_acc"
+	UserFieldLastNameIns            = "last_name_ins"
+	UserFieldLastNameAbl            = "last_name_abl"
+	UserFieldLastSeen               = "last_seen"
+	UserFieldMaidenName             = "maiden_name"
+	UserFieldMilitary               = "military"
+	UserFieldMovies                 = "movies"
+	UserFieldMusic                  = "music"
+	UserFieldNickname               = "nickname"
+	UserFieldOccupation             = "occupation"
+	UserFieldOnline                 = "online"
+	UserFieldPersonal               = "personal"
+	UserFieldPhoto50                = "photo_50"
+	UserFieldPhoto100               = "photo_100"
+	UserFieldPhoto200Orig           = "photo_200_orig"
+	UserFieldPhoto200               = "photo_200"
+	UserFieldPhoto400Orig           = "photo_400_orig"
+	UserFieldPhotoId                = "photo_id"
+	UserFieldPhotoMax               = "photo_max"
+	UserFieldPhotoMaxOrig           = "photo_max_orig"
+	UserFieldQuotes                 = "quotes"
+	UserFieldRelatives              = "relatives"
+	UserFieldRelation               = "relation"
+	UserFieldSchool                 = "schools"
+	UserFieldScreenName             = "screen_name"
+	UserFieldSex                    = "sex"
+	UserFieldSite                   = "site"
+	UserFieldStatus                 = "status"
+	UserFieldStatusAudio            = "status_audio"
+	UserFieldTimezone               = "timezone"
+	UserFieldTv                     = "tv"
+	UserFieldUniversities           = "universities"
+	UserFieldVerified               = "verified"
+	UserFieldWallComments           = "wall_comments"
+)
+
+var UserFieldAll = []string{UserFieldAbout,
+	UserFieldActivities,
+	UserFieldBirthdayDate,
+	UserFieldBlacklisted,
+	UserFieldBlacklistedByMe,
+	UserFieldBoks,
+	UserFieldCanPost,
+	UserFieldCanSeeAllPosts,
+	UserFieldCanSeeAudio,
+	UserFieldCanSendFriendRequest,
+	UserFieldCanWritePrivateMessage,
+	UserFieldCarrer,
+	UserFieldCity,
+	UserFieldCommonCount,
+	UserFieldConnections,
+	UserFieldContacts,
+	UserFieldCounters,
+	UserFieldCountry,
+	UserFieldCropPhoto,
+	UserFieldDomain,
+	UserFieldEducation,
+	UserFieldFirstNameNom,
+	UserFieldFirstNameGen,
+	UserFieldFirstNameDat,
+	UserFieldFirstNameAcc,
+	UserFieldFirstNameIns,
+	UserFieldFirstNameAbl,
+	UserFieldFollowersCount,
+	UserFieldFriendStatus,
+	UserFieldGames,
+	UserFieldHasMobile,
+	UserFieldHasPhoto,
+	UserFieldHomeTown,
+	UserFieldInterests,
+	UserFieldIsFavorite,
+	UserFieldIsFriend,
+	UserFieldIsHiddenFromFeed,
+	UserFieldLastNameNom,
+	UserFieldLastNameGen,
+	UserFieldLastNameDat,
+	UserFieldLastNameAcc,
+	UserFieldLastNameIns,
+	UserFieldLastNameAbl,
+	UserFieldLastSeen,
+	UserFieldMaidenName,
+	UserFieldMilitary,
+	UserFieldMovies,
+	UserFieldMusic,
+	UserFieldNickname,
+	UserFieldOccupation,
+	UserFieldOnline,
+	UserFieldPersonal,
+	UserFieldPhoto50,
+	UserFieldPhoto100,
+	UserFieldPhoto200Orig,
+	UserFieldPhoto200,
+	UserFieldPhoto400Orig,
+	UserFieldPhotoId,
+	UserFieldPhotoMax,
+	UserFieldPhotoMaxOrig,
+	UserFieldQuotes,
+	UserFieldRelatives,
+	UserFieldRelation,
+	UserFieldSchool,
+	UserFieldScreenName,
+	UserFieldSex,
+	UserFieldSite,
+	UserFieldStatus,
+	UserFieldStatusAudio,
+	UserFieldTimezone,
+	UserFieldTv,
+	UserFieldUniversities,
+	UserFieldVerified,
+	UserFieldWallComments}
