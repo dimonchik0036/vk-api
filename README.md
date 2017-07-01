@@ -5,3 +5,6 @@
 Golang package for VKontakte API.  
 
 Current VK API version 5.65.
+
+# Installation
+`go get -u github.com/Dimonchik0036/vk-api`
