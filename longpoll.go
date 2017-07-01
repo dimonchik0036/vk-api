@@ -1,8 +1,11 @@
 package vkapi
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -11,25 +14,42 @@ import (
 )
 
 const (
-	FlagMessageUnread = 1 << iota
-	FlagMessageOutBox
-	FlagMessageReplied
-	FlagMessageImportant
-	FlagMessageChat
-	FlagMessageFriends
-	FlagMessageSpam
-	FlagMessageDeleted
-	FlagMessageFixed
-	FlagMessageMedia
-	FlagMessageHidden = 65536
+	LPFlagMessageUnread = 1 << iota
+	LPFlagMessageOutBox
+	LPFlagMessageReplied
+	LPFlagMessageImportant
+	LPFlagMessageChat
+	LPFlagMessageFriends
+	LPFlagMessageSpam
+	LPFlagMessageDeleted
+	LPFlagMessageFixed
+	LPFlagMessageMedia
+	LPFlagMessageHidden = 65536
+)
 
+const (
 	LPModeAttachments   = 2
 	LPModeExtendedEvent = 8
 	LPModePts           = 32
 	LPModeExtra         = 64
 	LPModeRandomID      = 128
+)
 
-	LPCodeNewMessage = 4
+const (
+	LPCodeNewMessage    = 4
+	LPCodeFriendOnline  = 8
+	LPCodeFriendOffline = 9
+)
+
+const (
+	LPPlatformUndefined = iota
+	LPPlatformMobile
+	LPPlatformIPhone
+	LPPlatformIPad
+	LPPlatformAndroid
+	LPPlatformWPhone
+	LPPlatformWindows
+	LPPlatformWeb
 )
 
 // LongPoll allow you to interact with long poll server.
@@ -37,22 +57,22 @@ type LongPoll struct {
 	Host      string `json:"server"`
 	Path      string `json:"path"`
 	Key       string `json:"key"`
-	Ts        int64  `json:"ts"`
+	Timestamp int64  `json:"ts"`
 	LPVersion int    `json:"-"`
 	NeedPts   int    `json:"-"`
 }
 
 // LPUpdate stores response from a long poll server.
 type LPUpdate struct {
-	Code    int64
-	Update  []interface{}
-	Message *LPMessage
+	Code               int64
+	Update             []interface{}
+	Message            *LPMessage
+	FriendNotification *LPFriendNotification
 }
 
 // UnmarshalUpdate unmarshal a LPUpdate.
 func (update *LPUpdate) UnmarshalUpdate(mode int) error {
 	update.Code = int64(update.Update[0].(float64))
-
 	switch update.Code {
 	case LPCodeNewMessage:
 		message := new(LPMessage)
@@ -79,6 +99,17 @@ func (update *LPUpdate) UnmarshalUpdate(mode int) error {
 		}
 
 		update.Message = message
+	case LPCodeFriendOnline, LPCodeFriendOffline:
+		if len(update.Update) < 3 {
+			return errors.New("(" + string(update.Code) + ") invalid update size.")
+		}
+
+		friend := new(LPFriendNotification)
+		friend.ID = int64(update.Update[1].(float64))
+		friend.Arg = int(update.Update[2].(float64)) & 0xFF
+		friend.Timestamp = int64(update.Update[3].(float64))
+
+		update.FriendNotification = friend
 	}
 
 	return nil
@@ -96,11 +127,26 @@ type LPMessage struct {
 	RandomId    int64
 }
 
+// LPFriendNotification is a notification
+// that a friend has become online or offline.
+type LPFriendNotification struct {
+	ID int64
+
+	// If friend is online,
+	// then Arg is equal to platform.
+	//
+	// If the friend offline, then
+	// 0 - friend logout,
+	// 1 - offline by timeout.
+	Arg       int
+	Timestamp int64
+}
+
 // LPAnswer is response from long poll server.
 type LPAnswer struct {
-	Failed  int64           `json:"failed"`
-	Ts      int64           `json:"ts"`
-	Updates [][]interface{} `json:"updates"`
+	Failed    int64           `json:"failed"`
+	Timestamp int64           `json:"ts"`
+	Updates   [][]interface{} `json:"updates"`
 }
 
 // LPChan allows to receive new LPUpdate.
@@ -123,7 +169,7 @@ func (client *Client) InitLongPoll(needPts int, lpVersion int) *Error {
 	}
 
 	client.LongPoll = new(LongPoll)
-	if err := json.Unmarshal(res.Response.Bytes(), &client.LongPoll); err != nil {
+	if err := res.To(&client.LongPoll); err != nil {
 		return NewError(ErrBadCode, err.Error())
 	}
 
@@ -161,10 +207,14 @@ func (client *Client) GetLPAnswer(config LPConfig) (LPAnswer, error) {
 	values := url.Values{}
 	values.Add("act", "a_check")
 	values.Add("key", client.LongPoll.Key)
-	values.Add("ts", strconv.FormatInt(client.LongPoll.Ts, 10))
+	values.Add("ts", strconv.FormatInt(client.LongPoll.Timestamp, 10))
 	values.Add("wait", strconv.FormatInt(int64(config.Wait), 10))
 	values.Add("mode", strconv.FormatInt(int64(config.Mode), 10))
 	values.Add("version", strconv.FormatInt(int64(client.LongPoll.LPVersion), 10))
+
+	if client.apiClient.Log {
+		client.apiClient.logPrintf("Request: %s", NewRequest("getLongPoll", "", values).JS())
+	}
 
 	u := url.URL{}
 	u.Host = client.LongPoll.Host
@@ -179,15 +229,30 @@ func (client *Client) GetLPAnswer(config LPConfig) (LPAnswer, error) {
 
 	res, err := client.apiClient.httpClient.Do(req)
 	if err != nil {
+		client.apiClient.logPrintf("Response error: %s", err.Error())
 		return LPAnswer{}, err
 	}
 
+	var reader io.Reader
+	reader = res.Body
+
+	if client.apiClient.Log {
+		b, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			panic(err)
+		}
+
+		client.apiClient.logPrintf("Response: %s", string(b))
+		reader = bytes.NewReader(b)
+	}
+
 	if res.StatusCode != http.StatusOK {
+		client.apiClient.logPrintf("Response error: %s", res.Status)
 		return LPAnswer{}, errors.New(res.Status)
 	}
 
 	var answer LPAnswer
-	if err = json.NewDecoder(res.Body).Decode(&answer); err != nil {
+	if err = json.NewDecoder(reader).Decode(&answer); err != nil {
 		return LPAnswer{}, err
 	}
 
@@ -210,16 +275,21 @@ func (client *Client) GetLPUpdates(config LPConfig) ([]LPUpdate, error) {
 		for i := len(answer.Updates) - 1; i >= 0; i-- {
 			var LPUpdate LPUpdate
 			LPUpdate.Update = answer.Updates[i]
-			LPUpdate.UnmarshalUpdate(config.Mode)
+			if err := LPUpdate.UnmarshalUpdate(config.Mode); err != nil {
+				if client.apiClient.Log {
+					client.apiClient.Logger.Println(err)
+				}
+			}
+
 			LPUpdates = append(LPUpdates, LPUpdate)
 		}
 
-		client.LongPoll.Ts = answer.Ts
+		client.LongPoll.Timestamp = answer.Timestamp
 		return LPUpdates, nil
 	case 1:
-		client.LongPoll.Ts = answer.Ts
+		client.LongPoll.Timestamp = answer.Timestamp
 		if client.apiClient.Log {
-			client.apiClient.Logger.Println("Ts updated")
+			client.apiClient.Logger.Println("Timestamp updated")
 		}
 
 	case 2, 3:

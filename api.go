@@ -109,3 +109,9 @@ func ApiUrl() (url url.URL) {
 	url.Scheme = defaultScheme
 	return url
 }
+
+func (api *ApiClient) logPrintf(format string, v ...interface{}) {
+	if api.Log {
+		api.Logger.Printf(format, v...)
+	}
+}

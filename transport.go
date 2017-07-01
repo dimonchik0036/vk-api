@@ -35,6 +35,14 @@ type Request struct {
 	Values url.Values `json:"values"`
 }
 
+// NewRequest creates a new Request instance.
+func NewRequest(method string, token string, values url.Values) (req Request) {
+	req.Method = method
+	req.Token = token
+	req.Values = values
+	return
+}
+
 // Raw similar to the jsonRAW.
 type Raw []byte
 
@@ -46,12 +54,12 @@ func (r Raw) String() string {
 	return bytes.NewBuffer(r).String()
 }
 
-func (m Raw) MarshalJSON() ([]byte, error) {
-	return m, nil
+func (r Raw) MarshalJSON() ([]byte, error) {
+	return r, nil
 }
 
-func (m *Raw) UnmarshalJSON(data []byte) error {
-	*m = data
+func (r *Raw) UnmarshalJSON(data []byte) error {
+	*r = data
 	return nil
 }
 
@@ -73,10 +81,8 @@ func (api *ApiClient) Do(request Request) (response *Response, error *Error) {
 	}
 
 	req := request.HTTP()
-	start := time.Now()
-	if api.Log {
-		api.Logger.Println("DO", request.Method)
-	}
+
+	api.logPrintf("Request: %s", request.JS())
 
 	var res *http.Response
 	var err interface {
@@ -89,29 +95,28 @@ func (api *ApiClient) Do(request Request) (response *Response, error *Error) {
 			break
 		}
 
-		if api.Log {
-			api.Logger.Println("HTTP attempt", err, attempt)
-		}
+		api.logPrintf("HTTP attempt %s %d", err, attempt)
 
 		time.Sleep(time.Second * 3)
 	}
 
 	if err != nil {
-		if api.Log {
-			api.Logger.Println("HTTP fatal", err)
-		}
+		api.logPrintf("HTTP fatal %s", err)
 
 		return nil, NewError(ErrBadCode, "HTTP fatal "+err.Error())
-	}
-	if api.Log {
-		api.Logger.Println("HTTP", res.Status, time.Now().Sub(start))
 	}
 
 	if res.StatusCode != http.StatusOK {
 		return nil, NewError(ErrBadResponseCode, res.Status)
 	}
 
-	return Process(res.Body)
+	if response, error = Process(res.Body); error != nil {
+		api.logPrintf("Response error: %s", error.Error())
+	} else {
+		api.logPrintf("Response: %s", response.Response.String())
+	}
+
+	return
 }
 
 // HTTP translates the Request in *http.Request.
@@ -150,7 +155,7 @@ func (r Request) JS() string {
 	jsString := js.String()
 	jsString = strings.TrimSpace(jsString)
 
-	return fmt.Sprintf("API.%s(%s)", r.Method, jsString)
+	return fmt.Sprintf("%s(%s)", r.Method, jsString)
 }
 
 // vkResponseProcessor stores the Reader.
