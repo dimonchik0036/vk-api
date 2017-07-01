@@ -10,6 +10,28 @@ import (
 	"time"
 )
 
+const (
+	FlagMessageUnread = 1 << iota
+	FlagMessageOutBox
+	FlagMessageReplied
+	FlagMessageImportant
+	FlagMessageChat
+	FlagMessageFriends
+	FlagMessageSpam
+	FlagMessageDeleted
+	FlagMessageFixed
+	FlagMessageMedia
+	FlagMessageHidden = 65536
+
+	LPModeAttachments   = 2
+	LPModeExtendedEvent = 8
+	LPModePts           = 32
+	LPModeExtra         = 64
+	LPModeRandomID      = 128
+
+	LPCodeNewMessage = 4
+)
+
 type LongPoll struct {
 	Host      string `json:"server"`
 	Path      string `json:"path"`
@@ -19,12 +41,60 @@ type LongPoll struct {
 	NeedPts   int    `json:"-"`
 }
 
-type LPUpdate []interface{}
+type LPUpdate struct {
+	Code    int64
+	Update  []interface{}
+	Message *LPMessage
+}
 
-type LPUpdates struct {
-	Failed  int64      `json:"failed"`
-	Ts      int64      `json:"ts"`
-	Updates []LPUpdate `json:"updates"`
+func (update *LPUpdate) UnmarshalUpdate(mode int) error {
+	update.Code = int64(update.Update[0].(float64))
+
+	switch update.Code {
+	case LPCodeNewMessage:
+		message := new(LPMessage)
+
+		message.ID = int64(update.Update[1].(float64))
+		message.Flags = int64(update.Update[2].(float64))
+		message.FromID = int64(update.Update[3].(float64))
+		message.Timestamp = int64(update.Update[4].(float64))
+		message.Text = update.Update[5].(string)
+
+		if mode&LPModeAttachments == LPModeAttachments {
+			message.Attachments = make(map[string]string)
+			for key, value := range update.Update[6].(map[string]interface{}) {
+				message.Attachments[key] = value.(string)
+			}
+		}
+
+		if mode&LPModeRandomID&LPModeRandomID == (LPModeAttachments | LPModeRandomID) {
+			message.RandomId = int64(update.Update[7].(float64))
+		} else {
+			if mode&LPModeRandomID == LPModeRandomID {
+				message.RandomId = int64(update.Update[6].(float64))
+			}
+		}
+
+		update.Message = message
+	}
+
+	return nil
+}
+
+type LPMessage struct {
+	ID          int64
+	Flags       int64
+	FromID      int64
+	Timestamp   int64
+	Text        string
+	Attachments map[string]string
+	RandomId    int64
+}
+
+type LPAnswer struct {
+	Failed  int64           `json:"failed"`
+	Ts      int64           `json:"ts"`
+	Updates [][]interface{} `json:"updates"`
 }
 
 type LPChan <-chan LPUpdate
@@ -66,13 +136,13 @@ type LPConfig struct {
 	Mode int
 }
 
-func (client *Client) GetLPUpdates(config LPConfig) (LPUpdates, error) {
+func (client *Client) GetLPAnswer(config LPConfig) (LPAnswer, error) {
 	if client.apiClient == nil {
-		return LPUpdates{}, errors.New("A api client was not initialized")
+		return LPAnswer{}, errors.New("A api client was not initialized")
 	}
 
 	if client.LongPoll == nil {
-		return LPUpdates{}, errors.New("A long poll was not initialized")
+		return LPAnswer{}, errors.New("A long poll was not initialized")
 	}
 
 	values := url.Values{}
@@ -91,64 +161,88 @@ func (client *Client) GetLPUpdates(config LPConfig) (LPUpdates, error) {
 
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
-		return LPUpdates{}, err
+		return LPAnswer{}, err
 	}
 
 	res, err := client.apiClient.httpClient.Do(req)
 	if err != nil {
-		return LPUpdates{}, err
+		return LPAnswer{}, err
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return LPUpdates{}, errors.New(res.Status)
+		return LPAnswer{}, errors.New(res.Status)
 	}
 
-	var answer LPUpdates
+	var answer LPAnswer
 	if err = json.NewDecoder(res.Body).Decode(&answer); err != nil {
-		return LPUpdates{}, err
+		return LPAnswer{}, err
 	}
 
 	return answer, nil
 }
 
-func (client *Client) GetLPUpdatesChan(bufSize int, config LPConfig) (LPChan, error) {
+func (client *Client) GetLPUpdates(config LPConfig) ([]LPUpdate, error) {
+	answer, err := client.GetLPAnswer(config)
+	if err != nil {
+		return []LPUpdate{}, err
+	}
+
+	var LPUpdates []LPUpdate
+
+	switch answer.Failed {
+	case 0:
+		for i := len(answer.Updates) - 1; i >= 0; i-- {
+			var LPUpdate LPUpdate
+			LPUpdate.Update = answer.Updates[i]
+			LPUpdate.UnmarshalUpdate(config.Mode)
+			LPUpdates = append(LPUpdates, LPUpdate)
+		}
+
+		client.LongPoll.Ts = answer.Ts
+		return LPUpdates, nil
+	case 1:
+		client.LongPoll.Ts = answer.Ts
+		if client.apiClient.Log {
+			client.apiClient.Logger.Println("Ts updated")
+		}
+
+	case 2, 3:
+		if err := client.InitLongPoll(client.LongPoll.NeedPts, client.LongPoll.LPVersion); err != nil {
+			if client.apiClient.Log {
+				client.apiClient.Logger.Println("Long poll update error:", err)
+			}
+			return []LPUpdate{}, err
+		}
+
+		if client.apiClient.Log {
+			client.apiClient.Logger.Println("Long poll config updated")
+		}
+	}
+
+	return []LPUpdate{}, nil
+}
+
+func (client *Client) GetLPUpdatesChan(bufSize int, config LPConfig) (LPChan, *bool, error) {
 	ch := make(chan LPUpdate, bufSize)
+	run := true
 
 	go func() {
-		for {
-			update, err := client.GetLPUpdates(config)
+		for run {
+			updates, err := client.GetLPUpdates(config)
 			if err != nil {
-				log.Println(err)
 				log.Println("Failed to get updates, retrying in 3 seconds...")
 				time.Sleep(time.Second * 3)
 
 				continue
 			}
 
-			switch update.Failed {
-			case 0:
-				if len(update.Updates) == 0 {
-					continue
-				}
-
-				for i := len(update.Updates) - 1; i >= 0; i-- {
-					ch <- update.Updates[i]
-				}
-
-				client.LongPoll.Ts = update.Ts
-			case 1:
-				client.LongPoll.Ts = update.Ts
-				log.Println("Ts updated")
-			case 2, 3:
-				if err := client.InitLongPoll(client.LongPoll.NeedPts, client.LongPoll.LPVersion); err != nil {
-					log.Println("Long poll update error:", err)
-					return
-				}
-
-				log.Println("Long poll config updated")
+			for _, u := range updates {
+				ch <- u
 			}
 		}
+
+		close(ch)
 	}()
 
-	return ch, nil
+	return ch, &run, nil
 }
