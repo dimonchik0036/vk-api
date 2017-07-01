@@ -22,6 +22,11 @@ import (
 
 func main() {
 	client, _ := vkapi.NewClientFromToken("<access_token>")
+	/*client, err := vkapi.NewClientFromLogin("<username>", "<password>", vkapi.ScopeMessages)
+	if err != nil {
+	    log.Panic(err)
+	}*/
+	
 	if err := client.InitLongPoll(0, 2); err != nil {
 		log.Panic(err)
 	}
