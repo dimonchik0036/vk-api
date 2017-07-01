@@ -2,42 +2,58 @@ package vkapi
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/url"
 	"strings"
 )
 
-func (client *Client) UsersInfo(userIds []string, fieldArgs []string) (user *[]Users, err error) {
-	user = new([]Users)
-	args := strings.Join(fieldArgs, ",")
-	ids := strings.Join(userIds, ",")
-
+func (client *Client) UsersInfo(userIds []string, fieldArgs []string) (users []Users, err *Error) {
 	var req Request
 	req.Method = "users.get"
 	req.Values = url.Values{}
-	req.Values.Set("user_ids", ids)
-	req.Values.Set("fields", args)
+
+	if len(userIds) > 0 {
+		ids := strings.Join(userIds, ",")
+		req.Values.Set("user_ids", ids)
+	}
+
+	if len(userIds) > 0 {
+		args := strings.Join(fieldArgs, ",")
+		req.Values.Set("fields", args)
+	}
+
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
-	if res.ServerError() != nil {
-		return nil, res.ServerError()
-	}
-
 	log.Println("Answer:", res.Response.String())
 
-	if err := json.Unmarshal(res.Response.Bytes(), user); err != nil {
-		return nil, err
+	if err := json.Unmarshal(res.Response.Bytes(), &users); err != nil {
+		return nil, NewError(ErrBadCode, err.Error())
 	}
 
 	return
 }
 
+func (client *Client) InitMyProfile(fieldArgs []string) error {
+	users, err := client.UsersInfo([]string{}, fieldArgs)
+	if err != nil {
+		return err
+	}
+
+	if len(users) == 0 {
+		return errors.New("An unexpected error occurred.")
+	}
+
+	client.User = users[0]
+	return nil
+}
+
 type Users struct {
 	// Full description at https://vk.com/dev/objects/user
-	Id          int    `json:"id"`
+	Id          int64  `json:"id"`
 	FirstName   string `json:"first_name"`
 	LastName    string `json:"last_name"`
 	Deactivated string `json:"deactivated"`
@@ -57,7 +73,7 @@ type Users struct {
 	CanWritePrivateMessage int             `json:"can_write_private_message"`
 	Career                 *[]Career       `json:"career"`
 	City                   *City           `json:"city"`
-	CommonCount            int             `json:"common_count"`
+	CommonCount            int64           `json:"common_count"`
 	Skype                  string          `json:"skype"`
 	Facebook               string          `json:"facebook"`
 	Twitter                string          `json:"twitter"`
@@ -68,18 +84,18 @@ type Users struct {
 	Country                *Country        `json:"country"`
 	CropPhoto              *CropPhoto      `json:"crop_photo"`
 	Domain                 string          `json:"domain"`
-	University             int             `json:"university"`
+	University             int64           `json:"university"`
 	UniversityName         string          `json:"university_name"`
-	Faculty                int             `json:"faculty"`
+	Faculty                int64           `json:"faculty"`
 	FacultyName            string          `json:"faculty_name"`
-	Graduation             int             `json:"graduation"`
+	Graduation             int64           `json:"graduation"`
 	FirstNameNom           string          `json:"first_name_nom"`
 	FirstNameGen           string          `json:"first_name_gen"`
 	FirstNameDat           string          `json:"first_name_dat"`
 	FirstNameAcc           string          `json:"first_name_acc"`
 	FirstNameIns           string          `json:"first_name_ins"`
 	FirstNameAbl           string          `json:"first_name_abl"`
-	FollowersCount         int             `json:"followers_count"`
+	FollowersCount         int64           `json:"followers_count"`
 	FriendStatus           int             `json:"friend_status"`
 	Games                  string          `json:"games"`
 	HasMobile              int             `json:"has_mobile"`
@@ -129,13 +145,13 @@ type Users struct {
 }
 
 type Career struct {
-	GroupId   int    `json:"group_id"`
+	GroupId   int64  `json:"group_id"`
 	Company   string `json:"company"`
-	CountryId int    `json:"country_id"`
-	CityId    int    `json:"city_id"`
+	CountryId int64  `json:"country_id"`
+	CityId    int64  `json:"city_id"`
 	CityName  string `json:"city_name"`
-	From      int    `json:"from"`
-	Until     int    `json:"until"`
+	From      int64  `json:"from"`
+	Until     int64  `json:"until"`
 	Position  string `json:"position"`
 }
 
