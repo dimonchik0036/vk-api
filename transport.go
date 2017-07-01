@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -22,18 +21,21 @@ const (
 	defaultHTTPHeadersTimeout = defaultRequestTimeout
 )
 
+// Response is response from API server.
 type Response struct {
 	Errors   *Errors `json:"execute_errors,omitempty"`
 	Error    *Error  `json:"error,omitempty"`
 	Response Raw     `json:"response,omitempty"`
 }
 
+// Request contains data for the request to the API server.
 type Request struct {
 	Method string     `json:"method"`
 	Token  string     `json:"token"`
 	Values url.Values `json:"values"`
 }
 
+// Raw similar to the jsonRAW.
 type Raw []byte
 
 func (r Raw) Bytes() []byte {
@@ -45,7 +47,6 @@ func (r Raw) String() string {
 }
 
 func (m Raw) MarshalJSON() ([]byte, error) {
-	log.Println("marshalling to", m)
 	return m, nil
 }
 
@@ -58,12 +59,8 @@ type HTTPClient interface {
 	Do(*http.Request) (*http.Response, error)
 }
 
-func must(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
+// Do sends a request to a specific endpoint with our request
+// and returns response.
 func (api *ApiClient) Do(request Request) (response *Response, error *Error) {
 	for i, v := range api.Values() {
 		if request.Values.Get(i) == "" {
@@ -113,6 +110,7 @@ func (api *ApiClient) Do(request Request) (response *Response, error *Error) {
 	return Process(res.Body)
 }
 
+// HTTP translates the Request in *http.Request.
 func (r Request) HTTP() (req *http.Request) {
 	values := r.Values
 
@@ -125,12 +123,14 @@ func (r Request) HTTP() (req *http.Request) {
 	u.RawQuery = values.Encode()
 
 	req, err := http.NewRequest(defaultMethod, u.String(), nil)
-
-	must(err)
+	if err != nil {
+		panic(err)
+	}
 
 	return req
 }
 
+// JS translates the Request in string.
 func (r Request) JS() string {
 	args := make(map[string]string)
 	for k := range r.Values {
@@ -139,7 +139,9 @@ func (r Request) JS() string {
 	js := new(bytes.Buffer)
 	encoder := json.NewEncoder(js)
 
-	must(encoder.Encode(args))
+	if err := encoder.Encode(args); err != nil {
+		panic(err)
+	}
 
 	jsString := js.String()
 	jsString = strings.TrimSpace(jsString)
@@ -147,24 +149,28 @@ func (r Request) JS() string {
 	return fmt.Sprintf("API.%s(%s)", r.Method, jsString)
 }
 
+// vkResponseProcessor stores the Reader.
 type vkResponseProcessor struct {
 	input io.Reader
 }
 
+// To unmarshal the Response data.
 func (r Response) To(v interface{}) error {
 	return json.Unmarshal(r.Response.Bytes(), v)
 }
 
+// ServerError checks the Response to the error.
 func (r Response) ServerError() error {
 	if r.Errors != nil {
 		return r.Errors
 	}
-	if r.Error.Code == ErrZero {
+	if r.Error != nil {
 		return nil
 	}
 	return r.Error
 }
 
+// To unmarshal the Response from vkResponseProcessor data.
 func (d vkResponseProcessor) To(response *Response) *Error {
 	if rc, ok := d.input.(io.ReadCloser); ok {
 		defer rc.Close()
@@ -179,26 +185,33 @@ func (d vkResponseProcessor) To(response *Response) *Error {
 	return response.Error
 }
 
+// Process processes the input data
+// and returns a *Response in case of success.
 func Process(input io.Reader) (response *Response, err *Error) {
 	response = new(Response)
 	return response, vkResponseProcessor{input}.To(response)
 }
 
+// Encoder is the structure for processing the responses.
 type Encoder struct {
 	response *Response
 	err      error
 }
 
+// To unmarshal the Encoder data.
 func (e Encoder) To(v interface{}) error {
 	if e.err != nil {
 		return e.err
 	}
+
 	if e.response == nil {
-		return errors.New("wtf")
+		return errors.New("Unexpected error.")
 	}
+
 	return e.response.To(v)
 }
 
+// Encode makes Encoder from input data.
 func Encode(input io.Reader) Encoder {
 	res, err := Process(input)
 	return Encoder{res, err}

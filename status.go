@@ -6,6 +6,7 @@ import (
 	"strconv"
 )
 
+// SetStatus set status in your group.
 func (client *Client) SetStatus(groupId int64, text string) (err error) {
 	req := Request{}
 	req.Method = "status.set"
@@ -22,16 +23,18 @@ func (client *Client) SetStatus(groupId int64, text string) (err error) {
 	return
 }
 
+// SetMyStatus set status on your page.
 func (client *Client) SetMyStatus(text string) (err error) {
 	return client.SetStatus(0, text)
 }
 
-func (client *Client) Status(user_id int64) (text string, err error) {
+// Status returns the status from the user page.
+func (client *Client) Status(userId int64) (text string, err error) {
 	req := Request{}
 	req.Method = "status.get"
 	req.Values = url.Values{}
-	if user_id != 0 {
-		req.Values.Add("user_id", strconv.FormatInt(user_id, 10))
+	if userId != 0 {
+		req.Values.Add("user_id", strconv.FormatInt(userId, 10))
 	}
 
 	res, err := client.Do(req)
@@ -55,6 +58,7 @@ func (client *Client) Status(user_id int64) (text string, err error) {
 	return Text.Text, nil
 }
 
+// MyStatus returns the status from the Client page.
 func (client *Client) MyStatus() (text string, err error) {
 	return client.Status(0)
 }

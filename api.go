@@ -23,18 +23,21 @@ const (
 	paramToken    = "access_token"
 )
 
+// ApiClient allows you to send requests to API server.
 type ApiClient struct {
-	httpClient  HTTPClient   `url:"-"`
-	ApiVersion  string       `url:"v"`
-	AccessToken *AccessToken `url:"-"`
-	secureToken string       `url:"-"`
-	Log         bool         `url:"-"`
-	Logger      *log.Logger  `url:"-"`
+	httpClient  HTTPClient
+	ApiVersion  string
+	AccessToken *AccessToken
+	secureToken string
 
-	// HTTPS defines if use https instead of http. 1 - use https. 0 - use http
-	HTTPS string `url:"https"`
+	// If Log is true, ApiClient will write logs.
+	Log    bool
+	Logger *log.Logger
 
-	// Language defines the language in which different data will be returned, for example, names of countries and cities
+	// HTTPS defines if use https instead of http. 1 - use https. 0 - use http.
+	HTTPS string
+
+	// Language defines the language in which different data will be returned, for example, names of countries and cities.
 	// ru — Russian
 	// ua — Ukrainian
 	// be — Belarusian
@@ -43,9 +46,10 @@ type ApiClient struct {
 	// fi — Finnish
 	// de — German
 	// it — Italian
-	Language string `url:"lang"`
+	Language string
 }
 
+// SetAccessToken sets access token to ApiClient.
 func (api *ApiClient) SetAccessToken(token string) {
 	api.AccessToken = &AccessToken{token,
 		0,
@@ -59,7 +63,7 @@ func (api *ApiClient) SetAccessToken(token string) {
 		""}
 }
 
-// Values - Returning the default values from this api
+// Values returns values from this ApiClient.
 func (api *ApiClient) Values() (values url.Values) {
 	values = url.Values{}
 	values.Add(paramVersion, api.ApiVersion)
@@ -68,6 +72,7 @@ func (api *ApiClient) Values() (values url.Values) {
 	return
 }
 
+// Authenticate run authentication this ApiClient from Application.
 func (api *ApiClient) Authenticate(application Application) (err error) {
 	api.AccessToken, err = Authenticate(api, application)
 	if err != nil {
@@ -81,7 +86,8 @@ func (api *ApiClient) Authenticate(application Application) (err error) {
 	return nil
 }
 
-func DefaultApiClient() *ApiClient {
+// NewApiClient creates a new *ApiClient instance.
+func NewApiClient() *ApiClient {
 	client := &ApiClient{
 		defaultHTTPClient(),
 		defaultVersion,
@@ -96,6 +102,7 @@ func DefaultApiClient() *ApiClient {
 	return client
 }
 
+// ApiUrl return standard url for interacting with server API.
 func ApiUrl() (url url.URL) {
 	url.Host = defaultHost
 	url.Path = defaultPath

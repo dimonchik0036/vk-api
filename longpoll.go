@@ -32,6 +32,7 @@ const (
 	LPCodeNewMessage = 4
 )
 
+// LongPoll allow you to interact with long poll server.
 type LongPoll struct {
 	Host      string `json:"server"`
 	Path      string `json:"path"`
@@ -41,12 +42,14 @@ type LongPoll struct {
 	NeedPts   int    `json:"-"`
 }
 
+// LPUpdate stores response from a long poll server.
 type LPUpdate struct {
 	Code    int64
 	Update  []interface{}
 	Message *LPMessage
 }
 
+// UnmarshalUpdate unmarshal a LPUpdate.
 func (update *LPUpdate) UnmarshalUpdate(mode int) error {
 	update.Code = int64(update.Update[0].(float64))
 
@@ -81,6 +84,8 @@ func (update *LPUpdate) UnmarshalUpdate(mode int) error {
 	return nil
 }
 
+// LPMessage is new messages
+// that come from long poll server.
 type LPMessage struct {
 	ID          int64
 	Flags       int64
@@ -91,14 +96,18 @@ type LPMessage struct {
 	RandomId    int64
 }
 
+// LPAnswer is response from long poll server.
 type LPAnswer struct {
 	Failed  int64           `json:"failed"`
 	Ts      int64           `json:"ts"`
 	Updates [][]interface{} `json:"updates"`
 }
 
+// LPChan allows to receive new LPUpdate.
 type LPChan <-chan LPUpdate
 
+// InitLongPoll establishes a new connection
+// to long poll server.
 func (client *Client) InitLongPoll(needPts int, lpVersion int) *Error {
 	var req Request
 	req.Method = "messages.getLongPollServer"
@@ -131,11 +140,15 @@ func (client *Client) InitLongPoll(needPts int, lpVersion int) *Error {
 	return nil
 }
 
+// LPConfig stores data to connect to long poll server.
 type LPConfig struct {
 	Wait int
 	Mode int
 }
 
+// GetLPAnswer makes a query with parameters
+// from LPConfig to long poll server
+// and returns a LPAnswer in case of success.
 func (client *Client) GetLPAnswer(config LPConfig) (LPAnswer, error) {
 	if client.apiClient == nil {
 		return LPAnswer{}, errors.New("A api client was not initialized")
@@ -181,6 +194,9 @@ func (client *Client) GetLPAnswer(config LPConfig) (LPAnswer, error) {
 	return answer, nil
 }
 
+// GetLPUpdates makes a query with parameters
+// from LPConfig to long poll server
+// and returns array LPUpdate in case of success.
 func (client *Client) GetLPUpdates(config LPConfig) ([]LPUpdate, error) {
 	answer, err := client.GetLPAnswer(config)
 	if err != nil {
@@ -222,6 +238,9 @@ func (client *Client) GetLPUpdates(config LPConfig) ([]LPUpdate, error) {
 	return []LPUpdate{}, nil
 }
 
+// GetLPUpdatesChan makes a query with parameters
+// from LPConfig to long poll server
+// and returns LPChan in case of success.
 func (client *Client) GetLPUpdatesChan(bufSize int, config LPConfig) (LPChan, *bool, error) {
 	ch := make(chan LPUpdate, bufSize)
 	run := true

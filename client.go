@@ -5,6 +5,7 @@ import (
 	"log"
 )
 
+// Client allows you to transparently send requests to API server.
 type Client struct {
 	apiClient *ApiClient
 	User      Users
@@ -20,6 +21,7 @@ type Client struct {
 	//	BoardComment
 }
 
+// SetLogger sets logger.
 func (client *Client) SetLogger(logger *log.Logger) error {
 	if client.apiClient == nil {
 		return errors.New("ApiClient == nil")
@@ -29,6 +31,7 @@ func (client *Client) SetLogger(logger *log.Logger) error {
 	return nil
 }
 
+// Log allow write log.
 func (client *Client) Log(flag bool) error {
 	if client.apiClient == nil {
 		return errors.New("ApiClient == nil")
@@ -38,17 +41,20 @@ func (client *Client) Log(flag bool) error {
 	return nil
 }
 
-func DefaultClientFromToken(token string) (client *Client, err error) {
+// NewClientFromToken creates a new *Client instance.
+func NewClientFromToken(token string) (client *Client, err error) {
 	client = new(Client)
-	client.apiClient = DefaultApiClient()
+	client.apiClient = NewApiClient()
 	client.apiClient.SetAccessToken(token)
 	return
 }
 
-func DefaultClientFromLogin(username string, password string, scope int64) (client *Client, err error) {
+// NewClientFromLogin creates a new *Client instance
+// and allows you to pass a authentication.
+func NewClientFromLogin(username string, password string, scope int64) (client *Client, err error) {
 	client = new(Client)
-	client.apiClient = DefaultApiClient()
-	err = client.apiClient.Authenticate(DefaultApplication(username, password, scope))
+	client.apiClient = NewApiClient()
+	err = client.apiClient.Authenticate(NewApplication(username, password, scope))
 	if err != nil {
 		return nil, err
 	}
@@ -56,6 +62,8 @@ func DefaultClientFromLogin(username string, password string, scope int64) (clie
 	return
 }
 
+// Do makes a request to a specific endpoint with our request
+// and returns response.
 func (client *Client) Do(request Request) (response *Response, err *Error) {
 	if client.apiClient == nil {
 		return nil, NewError(ErrBadCode, "ApiClient not found")

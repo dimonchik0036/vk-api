@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+// UsersInfo returns array Users with the selected fields
+// if the request was successful.
 func (client *Client) UsersInfo(userIds []string, fieldArgs []string) (users []Users, err *Error) {
 	var req Request
 	req.Method = "users.get"
@@ -37,6 +39,7 @@ func (client *Client) UsersInfo(userIds []string, fieldArgs []string) (users []U
 	return
 }
 
+// InitMyProfile fills in the selected Client.User data.
 func (client *Client) InitMyProfile(fieldArgs []string) error {
 	users, err := client.UsersInfo([]string{}, fieldArgs)
 	if err != nil {
@@ -51,6 +54,7 @@ func (client *Client) InitMyProfile(fieldArgs []string) error {
 	return nil
 }
 
+// Users describes the structure of the users.
 type Users struct {
 	// Full description at https://vk.com/dev/objects/user
 	Id          int64  `json:"id"`

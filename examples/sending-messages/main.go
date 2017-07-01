@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	client, err := vkapi.DefaultClientFromLogin("<username>", "<password>", vkapi.ScopeMessages)
+	client, err := vkapi.NewClientFromLogin("<username>", "<password>", vkapi.ScopeMessages)
 	if err != nil {
 		log.Fatal(err)
 	}

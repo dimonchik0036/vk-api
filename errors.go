@@ -73,6 +73,7 @@ type ExecuteError struct {
 	Message string      `json:"error_msg"`
 }
 
+// Error contains standard errors.
 type Error struct {
 	Code       ServerError     `json:"error_code,omitempty"`
 	Message    string          `json:"error_msg,omitempty"`
@@ -82,6 +83,7 @@ type Error struct {
 	Request    Request         `json:"-"`
 }
 
+// NewError makes *Error from our ServerError and description.
 func NewError(code ServerError, description string) (err *Error) {
 	err = new(Error)
 	err.Code = code
@@ -89,6 +91,8 @@ func NewError(code ServerError, description string) (err *Error) {
 
 	return
 }
+
+// setRequest sets Request
 func (e *Error) setRequest(r Request) {
 	e.Request = r
 }
@@ -101,6 +105,7 @@ func (e ExecuteError) Error() string {
 	return fmt.Sprintf("%s: %s (%d)", e.Method, e.Message, e.Code)
 }
 
+//Is returns true if this is an error.
 func (e ServerError) Is(err error) bool {
 	if error(e) == err {
 		return true
@@ -112,10 +117,6 @@ func (e ServerError) Is(err error) bool {
 		return another.Code == e
 	}
 	return false
-}
-
-type ErrorResponse struct {
-	Error Error `json:"error"`
 }
 
 func (s ServerError) String() string {

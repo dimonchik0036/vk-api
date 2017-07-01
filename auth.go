@@ -37,6 +37,7 @@ const (
 	paramInvalidClient  = "invalid_client"
 )
 
+// OAuthUrl return standard url for interacting with authentication server.
 func OAuthUrl() (url url.URL) {
 	url.Scheme = oAuthScheme
 	url.Host = oAuthHost
@@ -44,6 +45,7 @@ func OAuthUrl() (url url.URL) {
 	return url
 }
 
+// Application allows you to interact with authentication server.
 type Application struct {
 	// GrantType - Authorization type, must be equal to `password`
 	GrantType string `json:"grant_type" url:"grant_type,omitempty"`
@@ -64,6 +66,7 @@ type Application struct {
 	Scope int64 `json:"scope" url:"scope,omitempty"`
 }
 
+// Values returns values from this Application.
 func (app *Application) Values() (values url.Values) {
 	values = url.Values{}
 	values.Set(paramGrantType, app.GrantType)
@@ -76,6 +79,7 @@ func (app *Application) Values() (values url.Values) {
 	return
 }
 
+//  AccessToken allows you to interact with API methods.
 type AccessToken struct {
 	AccessToken      string `json:"access_token"`
 	ExpiresIn        int64  `json:"expires_in"`
@@ -89,7 +93,8 @@ type AccessToken struct {
 	PhoneMask        string `json:"phone_mask"`
 }
 
-func DefaultApplication(username string, password string, scope int64) (app Application) {
+// NewApplication creates a new Application instance.
+func NewApplication(username string, password string, scope int64) (app Application) {
 	app.GrantType = "password"
 	app.Username = username
 	app.Password = password
@@ -100,6 +105,8 @@ func DefaultApplication(username string, password string, scope int64) (app Appl
 	return
 }
 
+// Authenticate authenticates *ApiClient through Application.
+// If the outcome is successful, it returns a *AccessToken.
 func Authenticate(client *ApiClient, app Application) (token *AccessToken, err error) {
 	token = new(AccessToken)
 	if client.httpClient == nil {

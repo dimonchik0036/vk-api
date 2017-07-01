@@ -10,6 +10,7 @@ const (
 	chatOffset = 2000000000
 )
 
+// Dialog describes the structure of the message.
 type Dialog struct {
 	Unread     int64    `json:"unread"`
 	Message    *Message `json:"message"`
@@ -18,6 +19,7 @@ type Dialog struct {
 	RealOffset int64    `json:"real_offset"`
 }
 
+// Message describes the structure of the message.
 type Message struct {
 	Id          int64      `json:"id"`
 	UserId      int64      `json:"user_id"`
@@ -70,6 +72,8 @@ type Message struct {
 
 }
 
+// MessageConfig contains the data
+// necessary to send a message.
 type MessageConfig struct {
 	UserId          int64   `json:"user_id"`
 	RandomId        int64   `json:"random_id"`
@@ -87,28 +91,34 @@ type MessageConfig struct {
 	//attachment *[]Attachment `json:"attachment"`
 }
 
+// SetGeo sets the location.
 func (m *MessageConfig) SetGeo(lat float64, long float64) {
 	m.geo = true
 	m.lat = lat
 	m.long = long
 }
 
+// NewMessage creates a new message for the user from the text.
 func NewMessage(id int64, message string) (config MessageConfig) {
 	config.PeerId = id
 	config.Message = message
 	return
 }
 
+// NewMessageToChat creates a new message for the chat from the text.
 func NewMessageToChat(id int64, message string) (config MessageConfig) {
 	return NewMessage(id+chatOffset, message)
 }
 
+// NewMessageToUsers creates a new message for several users from the text.
 func NewMessageToUsers(message string, ids ...int64) (config MessageConfig) {
 	config.UserIds = ids
 	config.Message = message
 	return
 }
 
+// SendMessage tries to send a message with the configuration
+// from the MessageConfig and returns message ID if it succeeds.
 func (client *Client) SendMessage(config MessageConfig) (int64, *Error) {
 	var req Request
 	req.Token = config.AccessToken
