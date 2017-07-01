@@ -1,8 +1,13 @@
 package vkapi
 
+import (
+	"errors"
+	"log"
+)
+
 type Client struct {
 	apiClient *ApiClient
-	User      *Users
+	User      Users
 	LongPoll  *LongPoll
 	//	Group
 	//	Wall
@@ -13,6 +18,24 @@ type Client struct {
 	//	Page
 	//	Board
 	//	BoardComment
+}
+
+func (client *Client) SetLogger(logger *log.Logger) error {
+	if client.apiClient == nil {
+		return errors.New("ApiClient == nil")
+	}
+
+	client.apiClient.Logger = logger
+	return nil
+}
+
+func (client *Client) Log(flag bool) error {
+	if client.apiClient == nil {
+		return errors.New("ApiClient == nil")
+	}
+
+	client.apiClient.Log = flag
+	return nil
 }
 
 func DefaultClientFromToken(token string) (client *Client, err error) {

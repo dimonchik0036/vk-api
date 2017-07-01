@@ -73,7 +73,9 @@ func (api *ApiClient) Do(request Request) (response *Response, error *Error) {
 
 	req := request.HTTP()
 	start := time.Now()
-	log.Println("DO", request.Method)
+	if api.Log {
+		api.Logger.Println("DO", request.Method)
+	}
 
 	var res *http.Response
 	var err interface {
@@ -86,16 +88,24 @@ func (api *ApiClient) Do(request Request) (response *Response, error *Error) {
 			break
 		}
 
-		log.Println("HTTP attempt", err, attempt)
+		if api.Log {
+			api.Logger.Println("HTTP attempt", err, attempt)
+		}
+
 		time.Sleep(time.Second * 3)
 	}
 
 	if err != nil {
-		log.Println("HTTP fatal", err)
+		if api.Log {
+			api.Logger.Println("HTTP fatal", err)
+		}
+
 		return nil, NewError(ErrBadCode, "HTTP fatal "+err.Error())
 	}
+	if api.Log {
+		api.Logger.Println("HTTP", res.Status, time.Now().Sub(start))
+	}
 
-	log.Println("HTTP", res.Status, time.Now().Sub(start))
 	if res.StatusCode != http.StatusOK {
 		return nil, NewError(ErrBadResponseCode, res.Status)
 	}
@@ -114,7 +124,6 @@ func (r Request) HTTP() (req *http.Request) {
 	u.Path = path.Join(u.Path, r.Method)
 	u.RawQuery = values.Encode()
 
-	log.Print("URL: ", u.String())
 	req, err := http.NewRequest(defaultMethod, u.String(), nil)
 
 	must(err)

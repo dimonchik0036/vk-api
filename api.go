@@ -2,7 +2,9 @@ package vkapi
 
 import (
 	"errors"
+	"log"
 	"net/url"
+	"os"
 )
 
 const (
@@ -26,6 +28,8 @@ type ApiClient struct {
 	ApiVersion  string       `url:"v"`
 	AccessToken *AccessToken `url:"-"`
 	secureToken string       `url:"-"`
+	Log         bool         `url:"-"`
+	Logger      *log.Logger  `url:"-"`
 
 	// HTTPS defines if use https instead of http. 1 - use https. 0 - use http
 	HTTPS string `url:"https"`
@@ -71,7 +75,7 @@ func (api *ApiClient) Authenticate(application Application) (err error) {
 	}
 
 	if api.AccessToken.Error != "" {
-		return errors.New(api.AccessToken.Error + ":" + api.AccessToken.ErrorDescription)
+		return errors.New(api.AccessToken.Error + " : " + api.AccessToken.ErrorDescription)
 	}
 
 	return nil
@@ -83,6 +87,8 @@ func DefaultApiClient() *ApiClient {
 		defaultVersion,
 		nil,
 		"",
+		false,
+		log.New(os.Stdout, "", log.LstdFlags),
 		defaultHTTPS,
 		defaultLanguage,
 	}
