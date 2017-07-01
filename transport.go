@@ -62,6 +62,10 @@ type HTTPClient interface {
 // Do sends a request to a specific endpoint with our request
 // and returns response.
 func (api *ApiClient) Do(request Request) (response *Response, error *Error) {
+	if request.Values == nil {
+		request.Values = url.Values{}
+	}
+
 	for i, v := range api.Values() {
 		if request.Values.Get(i) == "" {
 			request.Values.Add(i, v[0])
