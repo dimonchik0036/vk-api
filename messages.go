@@ -142,11 +142,11 @@ func (client *Client) SendMessage(config MessageConfig) (int64, *Error) {
 	}
 
 	if len(config.UserIds) != 0 {
-		v.Add("user_ids", ConcatInt64ToString(config.UserIds))
+		v.Add("user_ids", ConcatInt64ToString(config.UserIds...))
 	}
 
 	if len(config.ForwardMessages) != 0 {
-		v.Add("forward_messages", ConcatInt64ToString(config.ForwardMessages))
+		v.Add("forward_messages", ConcatInt64ToString(config.ForwardMessages...))
 	}
 
 	if config.StickerId != 0 {

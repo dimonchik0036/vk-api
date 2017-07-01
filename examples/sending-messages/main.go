@@ -13,7 +13,7 @@ func main() {
 
 	client.Log(true)
 
-	if err := client.InitMyProfile([]string{}); err != nil {
+	if err := client.InitMyProfile(); err != nil {
 		log.Fatal(err)
 	}
 

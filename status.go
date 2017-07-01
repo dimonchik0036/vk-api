@@ -1,7 +1,6 @@
 package vkapi
 
 import (
-	"encoding/json"
 	"net/url"
 	"strconv"
 )
@@ -50,8 +49,7 @@ func (client *Client) Status(userId int64) (text string, err error) {
 		Text string `json:"text"`
 	}{}
 
-	err = json.Unmarshal((*res).Response.Bytes(), &Text)
-	if err != nil {
+	if err := res.To(&Text); err != nil {
 		return "", err
 	}
 

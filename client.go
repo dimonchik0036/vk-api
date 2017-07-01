@@ -24,7 +24,7 @@ type Client struct {
 // SetLogger sets logger.
 func (client *Client) SetLogger(logger *log.Logger) error {
 	if client.apiClient == nil {
-		return errors.New("ApiClient == nil")
+		return errors.New("ApiClient not found.")
 	}
 
 	client.apiClient.Logger = logger
@@ -34,7 +34,7 @@ func (client *Client) SetLogger(logger *log.Logger) error {
 // Log allow write log.
 func (client *Client) Log(flag bool) error {
 	if client.apiClient == nil {
-		return errors.New("ApiClient == nil")
+		return errors.New("ApiClient not found.")
 	}
 
 	client.apiClient.Log = flag

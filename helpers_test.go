@@ -32,7 +32,7 @@ func TestConcatValues(t *testing.T) {
 
 func TestConcatInt64ToString(t *testing.T) {
 	mass := []int64{5, 15, -10, 70}
-	str := ConcatInt64ToString(mass)
+	str := ConcatInt64ToString(mass...)
 	if str != "5,15,-10,70" {
 		t.Fatal(str)
 	}

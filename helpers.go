@@ -24,7 +24,7 @@ func ConcatValues(unite bool, values ...url.Values) (result url.Values) {
 }
 
 // ConcatInt64ToString concatenating array int64 and returns them as a string.
-func ConcatInt64ToString(numbers []int64) string {
+func ConcatInt64ToString(numbers ...int64) string {
 	var str []string
 	for _, u := range numbers {
 		str = append(str, strconv.FormatInt(u, 10))
