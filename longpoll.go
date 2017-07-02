@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -52,14 +53,21 @@ const (
 	LPPlatformWeb
 )
 
+// Timestamp is the wrapper of int64.
+type Timestamp int64
+
+func (ts Timestamp) String() string {
+	return time.Unix(int64(ts), 0).Format("15:04:05 02/01/2006")
+}
+
 // LongPoll allow you to interact with long poll server.
 type LongPoll struct {
-	Host      string `json:"server"`
-	Path      string `json:"path"`
-	Key       string `json:"key"`
-	Timestamp int64  `json:"ts"`
-	LPVersion int    `json:"-"`
-	NeedPts   int    `json:"-"`
+	Host      string    `json:"server"`
+	Path      string    `json:"path"`
+	Key       string    `json:"key"`
+	Timestamp Timestamp `json:"ts"`
+	LPVersion int       `json:"-"`
+	NeedPts   int       `json:"-"`
 }
 
 // LPUpdate stores response from a long poll server.
@@ -79,6 +87,8 @@ func (update *LPUpdate) Event() (event string) {
 		event = "Friend online"
 	case LPCodeFriendOffline:
 		event = "Friend offline"
+	default:
+		event = "Undefined event"
 	}
 
 	return
@@ -94,7 +104,7 @@ func (update *LPUpdate) UnmarshalUpdate(mode int) error {
 		message.ID = int64(update.Update[1].(float64))
 		message.Flags = int64(update.Update[2].(float64))
 		message.FromID = int64(update.Update[3].(float64))
-		message.Timestamp = int64(update.Update[4].(float64))
+		message.Timestamp = Timestamp(update.Update[4].(float64))
 		message.Text = update.Update[5].(string)
 
 		if mode&LPModeAttachments == LPModeAttachments {
@@ -119,9 +129,10 @@ func (update *LPUpdate) UnmarshalUpdate(mode int) error {
 		}
 
 		friend := new(LPFriendNotification)
+		friend.Code = update.Code
 		friend.ID = -int64(update.Update[1].(float64))
 		friend.Arg = int(update.Update[2].(float64)) & 0xFF
-		friend.Timestamp = int64(update.Update[3].(float64))
+		friend.Timestamp = Timestamp(update.Update[3].(float64))
 
 		update.FriendNotification = friend
 	}
@@ -135,10 +146,14 @@ type LPMessage struct {
 	ID          int64
 	Flags       int64
 	FromID      int64
-	Timestamp   int64
+	Timestamp   Timestamp
 	Text        string
 	Attachments map[string]string
 	RandomId    int64
+}
+
+func (message *LPMessage) String() string {
+	return fmt.Sprintf("Message (%d):`%s` from (%d) at %s", message.ID, message.Text, message.FromID, message.Timestamp)
 }
 
 // LPFriendNotification is a notification
@@ -153,13 +168,32 @@ type LPFriendNotification struct {
 	// 0 - friend logout,
 	// 1 - offline by timeout.
 	Arg       int
-	Timestamp int64
+	Timestamp Timestamp
+	Code      int64
+}
+
+// Status returns event as a string.
+func (friend *LPFriendNotification) Status() (status string) {
+	switch friend.Code {
+	case LPCodeFriendOnline:
+		status = "Online"
+	case LPCodeFriendOffline:
+		status = "Offline"
+	default:
+		status = "Undefined event"
+	}
+
+	return
+}
+
+func (friend *LPFriendNotification) String() string {
+	return fmt.Sprintf("Friend (%d) was %s at %s", friend.ID, friend.Status(), friend.Timestamp)
 }
 
 // LPAnswer is response from long poll server.
 type LPAnswer struct {
 	Failed    int64           `json:"failed"`
-	Timestamp int64           `json:"ts"`
+	Timestamp Timestamp       `json:"ts"`
 	Updates   [][]interface{} `json:"updates"`
 }
 
@@ -211,7 +245,7 @@ type LPConfig struct {
 // and returns a LPAnswer in case of success.
 func (client *Client) GetLPAnswer(config LPConfig) (LPAnswer, error) {
 	if client.apiClient == nil {
-		return LPAnswer{}, errors.New("A api client was not initialized")
+		return LPAnswer{}, errors.New(ErrApiClientNotFound)
 	}
 
 	if client.LongPoll == nil {
@@ -221,7 +255,7 @@ func (client *Client) GetLPAnswer(config LPConfig) (LPAnswer, error) {
 	values := url.Values{}
 	values.Add("act", "a_check")
 	values.Add("key", client.LongPoll.Key)
-	values.Add("ts", strconv.FormatInt(client.LongPoll.Timestamp, 10))
+	values.Add("ts", strconv.FormatInt(int64(client.LongPoll.Timestamp), 10))
 	values.Add("wait", strconv.FormatInt(int64(config.Wait), 10))
 	values.Add("mode", strconv.FormatInt(int64(config.Mode), 10))
 	values.Add("version", strconv.FormatInt(int64(client.LongPoll.LPVersion), 10))
