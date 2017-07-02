@@ -1,11 +1,12 @@
-# Golang vk-api
+# VK API? GO!
 [![Build Status](https://travis-ci.org/Dimonchik0036/vk-api.svg?branch=master)](https://travis-ci.org/Dimonchik0036/vk-api)
 [![GoDoc](https://godoc.org/github.com/Dimonchik0036/vk-api?status.svg)](https://godoc.org/github.com/Dimonchik0036/vk-api)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/Dimonchik0036/vk-api/new/master/LICENSE)  
   
-Golang package for VKontakte API.  
+![](https://github.com/Dimonchik0036/vk-api/blob/master/logo.png)  
+Work with Vkontakte API for StandAlone application on The Go Programming Language.  
 
-Current VK API version 5.65.
+Current VK API version `5.65`.
 
 # Installation
 `go get -u github.com/Dimonchik0036/vk-api`
