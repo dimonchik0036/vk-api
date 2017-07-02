@@ -48,22 +48,22 @@ func OAuthUrl() (url url.URL) {
 // Application allows you to interact with authentication server.
 type Application struct {
 	// GrantType - Authorization type, must be equal to `password`
-	GrantType string `json:"grant_type" url:"grant_type,omitempty"`
+	GrantType string `json:"grant_type"`
 
 	// ClientId - Id of your application
-	ClientId string `json:"client_id" url:"client_id,omitempty"`
+	ClientId string `json:"client_id"`
 
 	// ClientSecret - Secret key of your application
-	ClientSecret string `json:"client_secret" url:"client_secret,omitempty"`
+	ClientSecret string `json:"client_secret"`
 
 	// Username - User username
-	Username string `json:"username" url:"username,omitempty"`
+	Username string `json:"username"`
 
 	// Password - User password
-	Password string `json:"password" url:"password,omitempty"`
+	Password string `json:"password"`
 
 	// Scope - Access rights required by the application
-	Scope int64 `json:"scope" url:"scope,omitempty"`
+	Scope int64 `json:"scope"`
 }
 
 // Values returns values from this Application.
@@ -107,14 +107,14 @@ func NewApplication(username string, password string, scope int64) (app Applicat
 
 // Authenticate authenticates *ApiClient through Application.
 // If the outcome is successful, it returns a *AccessToken.
-func Authenticate(client *ApiClient, app Application) (token *AccessToken, err error) {
+func Authenticate(api *ApiClient, app Application) (token *AccessToken, err error) {
 	token = new(AccessToken)
-	if client.httpClient == nil {
-		return nil, errors.New("HttpClient not found")
+	if api.httpClient == nil {
+		return nil, errors.New("HTTPClient not found.")
 	}
 	auth := OAuthUrl()
 
-	q := ConcatValues(false, auth.Query(), app.Values(), client.Values())
+	q := ConcatValues(false, auth.Query(), app.Values(), api.Values())
 	//q.Set("test_redirect_uri", "1")
 	if q != nil {
 		auth.RawQuery = q.Encode()
@@ -125,14 +125,14 @@ func Authenticate(client *ApiClient, app Application) (token *AccessToken, err e
 		return nil, err
 	}
 
-	res, err := client.httpClient.Do(req)
+	res, err := api.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
-	/*if res.StatusCode != http.StatusOK {
-		return AccessToken{}, errors.New("StatusCode != StatusOK")
-	}*/
+	if res.StatusCode != http.StatusOK {
+		return nil, errors.New("Error: " + res.Status)
+	}
 
 	err = json.NewDecoder(res.Body).Decode(token)
 	if err != nil {
