@@ -7,7 +7,7 @@ import (
 
 // Client allows you to transparently send requests to API server.
 type Client struct {
-	apiClient *ApiClient
+	apiClient *APIClient
 	User      Users
 	LongPoll  *LongPoll
 	//	Group

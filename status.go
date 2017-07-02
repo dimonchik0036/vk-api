@@ -6,15 +6,13 @@ import (
 )
 
 // SetStatus set status in your group.
-func (client *Client) SetStatus(groupId int64, text string) (err error) {
-	req := Request{}
-	req.Method = "status.set"
-	req.Values = url.Values{}
-	req.Values.Add("text", text)
-	if groupId != 0 {
-		req.Values.Add("group_id", strconv.FormatInt(groupId, 10))
+func (client *Client) SetStatus(groupID int64, text string) (err error) {
+	values := url.Values{}
+	values.Add("text", text)
+	if groupID != 0 {
+		values.Add("group_id", strconv.FormatInt(groupID, 10))
 	}
-	_, err = client.Do(req)
+	_, err = client.Do(NewRequest("status.set", "", values))
 	if err != nil {
 		return err
 	}
@@ -28,21 +26,15 @@ func (client *Client) SetMyStatus(text string) (err error) {
 }
 
 // Status returns the status from the user page.
-func (client *Client) Status(userId int64) (text string, err error) {
-	req := Request{}
-	req.Method = "status.get"
-	req.Values = url.Values{}
-	if userId != 0 {
-		req.Values.Add("user_id", strconv.FormatInt(userId, 10))
+func (client *Client) Status(userID int64) (text string, err error) {
+	values := url.Values{}
+	if userID != 0 {
+		values.Add("user_id", strconv.FormatInt(userID, 10))
 	}
 
-	res, err := client.Do(req)
+	res, err := client.Do(NewRequest("status.get", "", values))
 	if err != nil {
 		return "", err
-	}
-
-	if (*res).ServerError() != nil {
-		return "", (*res).Error
 	}
 
 	Text := struct {

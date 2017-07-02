@@ -115,10 +115,10 @@ func (update *LPUpdate) UnmarshalUpdate(mode int) error {
 		}
 
 		if mode&LPModeRandomID&LPModeRandomID == (LPModeAttachments | LPModeRandomID) {
-			message.RandomId = int64(update.Update[7].(float64))
+			message.RandomID = int64(update.Update[7].(float64))
 		} else {
 			if mode&LPModeRandomID == LPModeRandomID {
-				message.RandomId = int64(update.Update[6].(float64))
+				message.RandomID = int64(update.Update[6].(float64))
 			}
 		}
 
@@ -149,7 +149,7 @@ type LPMessage struct {
 	Timestamp   Timestamp
 	Text        string
 	Attachments map[string]string
-	RandomId    int64
+	RandomID    int64
 }
 
 func (message *LPMessage) String() string {

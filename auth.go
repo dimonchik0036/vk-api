@@ -13,15 +13,15 @@ const (
 	oAuthHost   = "oauth.vk.com"
 	oAuthPath   = "token"
 	oAuthMethod = "GET"
-	//defaultClientId = "2274003"                  //VK for Android
+	//defaultClientID = "2274003"                  //VK for Android
 	//defaultClientSecret = "hHbZxrka2uZ6jB1inYsH" //VK for Android
-	//defaultClientId = "3140623"                  //VK for iPhone
+	//defaultClientID = "3140623"                  //VK for iPhone
 	//defaultClientSecret = "VeWdmVclDCtn6ihuP1nt" //VK for iPhone
-	defaultClientId     = "3697615"              //VK for Windows
+	defaultClientID     = "3697615"              //VK for Windows
 	defaultClientSecret = "AlVXZFMUqyrnABp8ncuU" //VK for Windows
 
 	paramGrantType    = "grant_type"
-	paramClientId     = "client_id"
+	paramClientID     = "client_id"
 	paramClientSecret = "client_secret"
 	paramUsername     = "username"
 	paramPassword     = "password"
@@ -37,8 +37,8 @@ const (
 	paramInvalidClient  = "invalid_client"
 )
 
-// OAuthUrl return standard url for interacting with authentication server.
-func OAuthUrl() (url url.URL) {
+// OAuthURL return standard url for interacting with authentication server.
+func OAuthURL() (url url.URL) {
 	url.Scheme = oAuthScheme
 	url.Host = oAuthHost
 	url.Path = oAuthPath
@@ -50,8 +50,8 @@ type Application struct {
 	// GrantType - Authorization type, must be equal to `password`
 	GrantType string `json:"grant_type"`
 
-	// ClientId - Id of your application
-	ClientId string `json:"client_id"`
+	// ClientID - Id of your application
+	ClientID string `json:"client_id"`
 
 	// ClientSecret - Secret key of your application
 	ClientSecret string `json:"client_secret"`
@@ -70,7 +70,7 @@ type Application struct {
 func (app *Application) Values() (values url.Values) {
 	values = url.Values{}
 	values.Set(paramGrantType, app.GrantType)
-	values.Set(paramClientId, app.ClientId)
+	values.Set(paramClientID, app.ClientID)
 	values.Set(paramClientSecret, app.ClientSecret)
 	values.Set(paramUsername, app.Username)
 	values.Set(paramPassword, app.Password)
@@ -99,7 +99,7 @@ func NewApplication(username string, password string, scope int64) (app Applicat
 	app.Username = username
 	app.Password = password
 	app.Scope = scope
-	app.ClientId = defaultClientId
+	app.ClientID = defaultClientID
 	app.ClientSecret = defaultClientSecret
 
 	return
@@ -107,12 +107,12 @@ func NewApplication(username string, password string, scope int64) (app Applicat
 
 // Authenticate authenticates *ApiClient through Application.
 // If the outcome is successful, it returns a *AccessToken.
-func Authenticate(api *ApiClient, app Application) (token *AccessToken, err error) {
+func Authenticate(api *APIClient, app Application) (token *AccessToken, err error) {
 	token = new(AccessToken)
 	if api.httpClient == nil {
 		return nil, errors.New("HTTPClient not found.")
 	}
-	auth := OAuthUrl()
+	auth := OAuthURL()
 
 	q := ConcatValues(false, auth.Query(), app.Values(), api.Values())
 	//q.Set("test_redirect_uri", "1")

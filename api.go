@@ -24,7 +24,7 @@ const (
 )
 
 const (
-	ErrApiClientNotFound = "ApiClient not found."
+	ErrApiClientNotFound = "APIClient not found."
 )
 
 const (
@@ -38,14 +38,14 @@ const (
 	LangIT = "it" //Italian
 )
 
-// ApiClient allows you to send requests to API server.
-type ApiClient struct {
+// APIClient allows you to send requests to API server.
+type APIClient struct {
 	httpClient  HTTPClient
-	ApiVersion  string
+	APIVersion  string
 	AccessToken *AccessToken
 	secureToken string
 
-	// If Log is true, ApiClient will write logs.
+	// If Log is true, APIClient will write logs.
 	Log    bool
 	Logger *log.Logger
 
@@ -56,8 +56,8 @@ type ApiClient struct {
 	Language string
 }
 
-// SetAccessToken sets access token to ApiClient.
-func (api *ApiClient) SetAccessToken(token string) {
+// SetAccessToken sets access token to APIClient.
+func (api *APIClient) SetAccessToken(token string) {
 	api.AccessToken = &AccessToken{token,
 		0,
 		0,
@@ -70,17 +70,17 @@ func (api *ApiClient) SetAccessToken(token string) {
 		""}
 }
 
-// Values returns values from this ApiClient.
-func (api *ApiClient) Values() (values url.Values) {
+// Values returns values from this APIClient.
+func (api *APIClient) Values() (values url.Values) {
 	values = url.Values{}
-	values.Add(paramVersion, api.ApiVersion)
+	values.Add(paramVersion, api.APIVersion)
 	values.Add(paramLanguage, api.Language)
 	values.Add(paramHTTPS, api.HTTPS)
 	return
 }
 
-// Authenticate run authentication this ApiClient from Application.
-func (api *ApiClient) Authenticate(application Application) (err error) {
+// Authenticate run authentication this APIClient from Application.
+func (api *APIClient) Authenticate(application Application) (err error) {
 	api.AccessToken, err = Authenticate(api, application)
 	if err != nil {
 		return err
@@ -93,9 +93,9 @@ func (api *ApiClient) Authenticate(application Application) (err error) {
 	return nil
 }
 
-// NewApiClient creates a new *ApiClient instance.
-func NewApiClient() *ApiClient {
-	client := &ApiClient{
+// NewApiClient creates a new *APIClient instance.
+func NewApiClient() *APIClient {
+	client := &APIClient{
 		defaultHTTPClient(),
 		defaultVersion,
 		nil,
@@ -109,15 +109,15 @@ func NewApiClient() *ApiClient {
 	return client
 }
 
-// ApiUrl return standard url for interacting with server API.
-func ApiUrl() (url url.URL) {
+// ApiURL return standard url for interacting with server API.
+func ApiURL() (url url.URL) {
 	url.Host = defaultHost
 	url.Path = defaultPath
 	url.Scheme = defaultScheme
 	return url
 }
 
-func (api *ApiClient) logPrintf(format string, v ...interface{}) {
+func (api *APIClient) logPrintf(format string, v ...interface{}) {
 	if api.Log {
 		api.Logger.Printf(format, v...)
 	}

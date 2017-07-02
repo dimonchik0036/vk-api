@@ -69,7 +69,7 @@ type HTTPClient interface {
 
 // Do sends a request to a specific endpoint with our request
 // and returns response.
-func (api *ApiClient) Do(request Request) (response *Response, error *Error) {
+func (api *APIClient) Do(request Request) (response *Response, error *Error) {
 	if request.Values == nil {
 		request.Values = url.Values{}
 	}
@@ -127,7 +127,7 @@ func (r Request) HTTP() (req *http.Request) {
 		values.Set(paramToken, r.Token)
 	}
 
-	u := ApiUrl()
+	u := ApiURL()
 	u.Path = path.Join(u.Path, r.Method)
 	u.RawQuery = values.Encode()
 
@@ -145,10 +145,9 @@ func (r Request) JS() string {
 	for k := range r.Values {
 		args[k] = r.Values.Get(k)
 	}
-	js := new(bytes.Buffer)
-	encoder := json.NewEncoder(js)
 
-	if err := encoder.Encode(args); err != nil {
+	js := new(bytes.Buffer)
+	if err := json.NewEncoder(js).Encode(args); err != nil {
 		panic(err)
 	}
 
@@ -185,9 +184,7 @@ func (d vkResponseProcessor) To(response *Response) *Error {
 		defer rc.Close()
 	}
 
-	decoder := json.NewDecoder(d.input)
-
-	if err := decoder.Decode(response); err != nil {
+	if err := json.NewDecoder(d.input).Decode(response); err != nil {
 		return NewError(ErrBadCode, err.Error())
 	}
 

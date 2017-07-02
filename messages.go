@@ -75,18 +75,19 @@ type Message struct {
 // MessageConfig contains the data
 // necessary to send a message.
 type MessageConfig struct {
-	UserId          int64   `json:"user_id"`
-	RandomId        int64   `json:"random_id"`
-	PeerId          int64   `json:"peer_id"`
+	UserID          int64   `json:"user_id"`
+	RandomID        int64   `json:"random_id"`
+	PeerID          int64   `json:"peer_id"`
 	Domain          string  `json:"domain"`
-	ChatId          int64   `json:"chat_id"`
-	UserIds         []int64 `json:"user_ids"`
+	ChatID          int64   `json:"chat_id"`
+	GroupID         int64   `json:"group_id"`
+	UserIDs         []int64 `json:"user_ids"`
 	Message         string  `json:"message"`
 	geo             bool    `json:"-"`
 	lat             float64 `json:"lat"`
 	long            float64 `json:"long"`
 	ForwardMessages []int64 `json:"forward_messages"`
-	StickerId       int64   `json:"sticker_id"`
+	StickerID       int64   `json:"sticker_id"`
 	AccessToken     string  `json:"access_token"`
 	//attachment *[]Attachment `json:"attachment"`
 }
@@ -100,7 +101,7 @@ func (m *MessageConfig) SetGeo(lat float64, long float64) {
 
 // NewMessage creates a new message for the user from the text.
 func NewMessage(id int64, message string) (config MessageConfig) {
-	config.PeerId = id
+	config.PeerID = id
 	config.Message = message
 	return
 }
@@ -112,7 +113,7 @@ func NewMessageToChat(id int64, message string) (config MessageConfig) {
 
 // NewMessageToUsers creates a new message for several users from the text.
 func NewMessageToUsers(message string, ids ...int64) (config MessageConfig) {
-	config.UserIds = ids
+	config.UserIDs = ids
 	config.Message = message
 	return
 }
@@ -125,40 +126,40 @@ func (client *Client) SendMessage(config MessageConfig) (int64, *Error) {
 	req.Method = "messages.send"
 	v := url.Values{}
 
-	if config.PeerId != 0 {
-		v.Add("peer_id", fmt.Sprintf("%d", config.PeerId))
+	if config.PeerID != 0 {
+		v.Add("peer_id", fmt.Sprintf("%d", config.PeerID))
 	}
 
-	if config.UserId != 0 {
-		v.Add("user_id", fmt.Sprintf("%d", config.UserId))
+	if config.UserID != 0 {
+		v.Add("user_id", fmt.Sprintf("%d", config.UserID))
 	}
 
 	if config.Domain != "" {
 		v.Add("domain", config.Domain)
 	}
 
-	if config.ChatId != 0 {
-		v.Add("chat_id", fmt.Sprintf("%d", config.RandomId))
+	if config.ChatID != 0 {
+		v.Add("chat_id", fmt.Sprintf("%d", config.RandomID))
 	}
 
-	if len(config.UserIds) != 0 {
-		v.Add("user_ids", ConcatInt64ToString(config.UserIds...))
+	if len(config.UserIDs) != 0 {
+		v.Add("user_ids", ConcatInt64ToString(config.UserIDs...))
 	}
 
 	if len(config.ForwardMessages) != 0 {
 		v.Add("forward_messages", ConcatInt64ToString(config.ForwardMessages...))
 	}
 
-	if config.StickerId != 0 {
-		v.Add("sticker_id", fmt.Sprintf("%d", config.StickerId))
+	if config.StickerID != 0 {
+		v.Add("sticker_id", fmt.Sprintf("%d", config.StickerID))
 	}
 
 	if config.Message != "" {
 		v.Add("message", config.Message)
 	}
 
-	if config.RandomId != 0 {
-		v.Add("random_id", fmt.Sprintf("%d", config.RandomId))
+	if config.RandomID != 0 {
+		v.Add("random_id", fmt.Sprintf("%d", config.RandomID))
 	}
 
 	if config.geo {
