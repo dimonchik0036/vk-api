@@ -21,10 +21,21 @@ type Client struct {
 	//	BoardComment
 }
 
+// SetLanguage sets the language in which different data will be returned,
+// for example, names of countries and cities.
+func (client *Client) SetLanguage(lang string) error {
+	if client.apiClient == nil {
+		return errors.New(ErrApiClientNotFound)
+	}
+
+	client.apiClient.Language = lang
+	return nil
+}
+
 // SetLogger sets logger.
 func (client *Client) SetLogger(logger *log.Logger) error {
 	if client.apiClient == nil {
-		return errors.New("ApiClient not found.")
+		return errors.New(ErrApiClientNotFound)
 	}
 
 	client.apiClient.Logger = logger
@@ -34,7 +45,7 @@ func (client *Client) SetLogger(logger *log.Logger) error {
 // Log allow write log.
 func (client *Client) Log(flag bool) error {
 	if client.apiClient == nil {
-		return errors.New("ApiClient not found.")
+		return errors.New(ErrApiClientNotFound)
 	}
 
 	client.apiClient.Log = flag
@@ -66,7 +77,7 @@ func NewClientFromLogin(username string, password string, scope int64) (client *
 // and returns response.
 func (client *Client) Do(request Request) (response *Response, err *Error) {
 	if client.apiClient == nil {
-		return nil, NewError(ErrBadCode, "ApiClient not found")
+		return nil, NewError(ErrBadCode, ErrApiClientNotFound)
 	}
 
 	if request.Token == "" && client.apiClient.AccessToken != nil {

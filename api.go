@@ -15,12 +15,27 @@ const (
 	defaultMethod  = "GET"
 
 	defaultHTTPS    = "1"
-	defaultLanguage = "en"
+	defaultLanguage = LangEN
 
 	paramVersion  = "v"
 	paramLanguage = "lang"
 	paramHTTPS    = "https"
 	paramToken    = "access_token"
+)
+
+const (
+	ErrApiClientNotFound = "ApiClient not found."
+)
+
+const (
+	LangRU = "ru" //Russian
+	LangUA = "ua" //Ukrainian
+	LangBE = "be" //Belarusian
+	LangEN = "en" //English
+	LangES = "es" //Spanish
+	LangFI = "fi" //Finnish
+	LangDE = "de" //German
+	LangIT = "it" //Italian
 )
 
 // ApiClient allows you to send requests to API server.
@@ -37,15 +52,7 @@ type ApiClient struct {
 	// HTTPS defines if use https instead of http. 1 - use https. 0 - use http.
 	HTTPS string
 
-	// Language defines the language in which different data will be returned, for example, names of countries and cities.
-	// ru — Russian
-	// ua — Ukrainian
-	// be — Belarusian
-	// en — English
-	// es — Spanish
-	// fi — Finnish
-	// de — German
-	// it — Italian
+	// Language define the language in which different data will be returned, for example, names of countries and cities.
 	Language string
 }
 
