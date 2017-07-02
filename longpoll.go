@@ -70,6 +70,20 @@ type LPUpdate struct {
 	FriendNotification *LPFriendNotification
 }
 
+// Event returns event as a string.
+func (update *LPUpdate) Event() (event string) {
+	switch update.Code {
+	case LPCodeNewMessage:
+		event = "New message"
+	case LPCodeFriendOnline:
+		event = "Friend online"
+	case LPCodeFriendOffline:
+		event = "Friend offline"
+	}
+
+	return
+}
+
 // UnmarshalUpdate unmarshal a LPUpdate.
 func (update *LPUpdate) UnmarshalUpdate(mode int) error {
 	update.Code = int64(update.Update[0].(float64))
@@ -105,7 +119,7 @@ func (update *LPUpdate) UnmarshalUpdate(mode int) error {
 		}
 
 		friend := new(LPFriendNotification)
-		friend.ID = int64(update.Update[1].(float64))
+		friend.ID = -int64(update.Update[1].(float64))
 		friend.Arg = int(update.Update[2].(float64)) & 0xFF
 		friend.Timestamp = int64(update.Update[3].(float64))
 
