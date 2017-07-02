@@ -179,3 +179,28 @@ func (client *Client) SendMessage(config MessageConfig) (int64, *Error) {
 
 	return answer, nil
 }
+
+// SetActivity changes the status of typing by user in the dialog.
+// Accepts userID as string or int64, chat as 2000000000 + chatID,
+// group as -groupID.
+func (client *Client) SetActivity(dst interface{}) *Error {
+	values := url.Values{}
+	switch dst.(type) {
+	case string:
+		values.Add("user_id", dst.(string))
+	case int64:
+		values.Add("peer_id", strconv.FormatInt(dst.(int64), 10))
+	case int:
+		values.Add("peer_id", strconv.FormatInt(int64(dst.(int)), 10))
+	default:
+		return NewError(ErrBadCode, "Wrong data")
+	}
+
+	values.Add("type", "typing")
+	_, err := client.Do(NewRequest("messages.setActivity", "", values))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
