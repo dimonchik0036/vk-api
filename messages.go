@@ -92,6 +92,36 @@ type MessageConfig struct {
 	//attachment *[]Attachment `json:"attachment"`
 }
 
+// NewMCFromUserID creates a new MessageConfig instance from userID.
+func NewMCFromUserID(userID int64) (config MessageConfig) {
+	config.UserID = userID
+	return
+}
+
+// NewMCFromPeerID creates a new MessageConfig instance from peerID.
+func NewMCFromPeerID(peerID int64) (config MessageConfig) {
+	config.PeerID = peerID
+	return
+}
+
+// NewMCFromChatID creates a new MessageConfig instance from chatID.
+func NewMCFromChatID(chatID int64) (config MessageConfig) {
+	config.ChatID = chatID
+	return
+}
+
+// NewMCFromGroupID creates a new MessageConfig instance from groupID.
+func NewMCFromGroupID(groupID int64) (config MessageConfig) {
+	config.GroupID = groupID
+	return
+}
+
+// NewMCFromDomain creates a new MessageConfig instance from domain.
+func NewMCFromDomain(domain string) (config MessageConfig) {
+	config.Domain = domain
+	return
+}
+
 // SetGeo sets the location.
 func (m *MessageConfig) SetGeo(lat float64, long float64) {
 	m.geo = true
@@ -182,17 +212,20 @@ func (client *Client) SendMessage(config MessageConfig) (int64, *Error) {
 }
 
 // SetActivity changes the status of typing by user in the dialog.
-// Accepts userID as string or int64, chat as 2000000000 + chatID,
-// group as -groupID.
-func (client *Client) SetActivity(dst interface{}) *Error {
+func (client *Client) SetActivity(config MessageConfig) *Error {
 	values := url.Values{}
-	switch dst.(type) {
-	case string:
-		values.Add("user_id", dst.(string))
-	case int64:
-		values.Add("peer_id", strconv.FormatInt(dst.(int64), 10))
-	case int:
-		values.Add("peer_id", strconv.FormatInt(int64(dst.(int)), 10))
+
+	switch {
+	case config.Domain != "":
+		values.Add("user_id", config.Domain)
+	case config.UserID != 0:
+		values.Add("peer_id", strconv.FormatInt(config.UserID, 10))
+	case config.PeerID != 0:
+		values.Add("peer_id", strconv.FormatInt(config.PeerID, 10))
+	case config.ChatID != 0:
+		values.Add("peer_id", strconv.FormatInt(config.ChatID+chatOffset, 10))
+	case config.GroupID != 0:
+		values.Add("peer_id", strconv.FormatInt(-config.GroupID, 10))
 	default:
 		return NewError(ErrBadCode, "Wrong data")
 	}
