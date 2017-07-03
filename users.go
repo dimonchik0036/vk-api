@@ -1,29 +1,26 @@
 package vkapi
 
 import (
-	"errors"
 	"net/url"
 	"strings"
 )
 
 // UsersInfo returns array Users with the selected fields
 // if the request was successful.
-func (client *Client) UsersInfo(userIds []string, fieldArgs ...string) (users []Users, err *Error) {
-	var req Request
-	req.Method = "users.get"
-	req.Values = url.Values{}
-
-	if len(userIds) > 0 {
-		ids := strings.Join(userIds, ",")
-		req.Values.Set("user_ids", ids)
+func (client *Client) UsersInfo(dst Destination, fieldArgs ...string) (users []Users, err *Error) {
+	values := url.Values{}
+	if dst.ScreenName != "" {
+		values.Add("user_ids", dst.ScreenName)
+	} else {
+		values = dst.Values()
 	}
 
 	if len(fieldArgs) > 0 {
 		args := strings.Join(fieldArgs, ",")
-		req.Values.Set("fields", args)
+		values.Set("fields", args)
 	}
 
-	res, err := client.Do(req)
+	res, err := client.Do(NewRequest("users.get", "", values))
 	if err != nil {
 		return nil, err
 	}
@@ -36,14 +33,14 @@ func (client *Client) UsersInfo(userIds []string, fieldArgs ...string) (users []
 }
 
 // InitMyProfile fills in the selected Client.User data.
-func (client *Client) InitMyProfile(fieldArgs ...string) error {
-	users, err := client.UsersInfo([]string{}, fieldArgs...)
+func (client *Client) InitMyProfile(fieldArgs ...string) *Error {
+	users, err := client.UsersInfo(Destination{}, fieldArgs...)
 	if err != nil {
 		return err
 	}
 
 	if len(users) == 0 {
-		return errors.New("An unexpected error occurred.")
+		return NewError(ErrBadCode, "An unexpected error occurred.")
 	}
 
 	client.User = users[0]

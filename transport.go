@@ -82,7 +82,9 @@ func (api *APIClient) Do(request Request) (response *Response, error *Error) {
 
 	req := request.HTTP()
 
-	api.logPrintf("Request: %s", request.JS())
+	if api.Log {
+		api.Logger.Printf("Request: %s", request.JS())
+	}
 
 	var res *http.Response
 	var err interface {

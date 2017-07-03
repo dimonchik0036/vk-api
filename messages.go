@@ -75,51 +75,16 @@ type Message struct {
 // MessageConfig contains the data
 // necessary to send a message.
 type MessageConfig struct {
-	UserID          int64   `json:"user_id"`
-	RandomID        int64   `json:"random_id"`
-	PeerID          int64   `json:"peer_id"`
-	Domain          string  `json:"domain"`
-	ChatID          int64   `json:"chat_id"`
-	GroupID         int64   `json:"group_id"`
-	UserIDs         []int64 `json:"user_ids"`
-	Message         string  `json:"message"`
-	geo             bool    `json:"-"`
-	lat             float64 `json:"lat"`
-	long            float64 `json:"long"`
-	ForwardMessages []int64 `json:"forward_messages"`
-	StickerID       int64   `json:"sticker_id"`
-	AccessToken     string  `json:"access_token"`
+	Destination     Destination `json:"destination"`
+	RandomID        int64       `json:"random_id"`
+	Message         string      `json:"message"`
+	geo             bool        `json:"-"`
+	lat             float64     `json:"lat"`
+	long            float64     `json:"long"`
+	ForwardMessages []int64     `json:"forward_messages"`
+	StickerID       int64       `json:"sticker_id"`
+	AccessToken     string      `json:"access_token"`
 	//attachment *[]Attachment `json:"attachment"`
-}
-
-// NewMCFromUserID creates a new MessageConfig instance from userID.
-func NewMCFromUserID(userID int64) (config MessageConfig) {
-	config.UserID = userID
-	return
-}
-
-// NewMCFromPeerID creates a new MessageConfig instance from peerID.
-func NewMCFromPeerID(peerID int64) (config MessageConfig) {
-	config.PeerID = peerID
-	return
-}
-
-// NewMCFromChatID creates a new MessageConfig instance from chatID.
-func NewMCFromChatID(chatID int64) (config MessageConfig) {
-	config.ChatID = chatID
-	return
-}
-
-// NewMCFromGroupID creates a new MessageConfig instance from groupID.
-func NewMCFromGroupID(groupID int64) (config MessageConfig) {
-	config.GroupID = groupID
-	return
-}
-
-// NewMCFromDomain creates a new MessageConfig instance from domain.
-func NewMCFromDomain(domain string) (config MessageConfig) {
-	config.Domain = domain
-	return
 }
 
 // SetGeo sets the location.
@@ -130,20 +95,8 @@ func (m *MessageConfig) SetGeo(lat float64, long float64) {
 }
 
 // NewMessage creates a new message for the user from the text.
-func NewMessage(id int64, message string) (config MessageConfig) {
-	config.PeerID = id
-	config.Message = message
-	return
-}
-
-// NewMessageToChat creates a new message for the chat from the text.
-func NewMessageToChat(id int64, message string) (config MessageConfig) {
-	return NewMessage(id+chatOffset, message)
-}
-
-// NewMessageToUsers creates a new message for several users from the text.
-func NewMessageToUsers(message string, ids ...int64) (config MessageConfig) {
-	config.UserIDs = ids
+func NewMessage(dst Destination, message string) (config MessageConfig) {
+	config.Destination = dst
 	config.Message = message
 	return
 }
@@ -151,54 +104,30 @@ func NewMessageToUsers(message string, ids ...int64) (config MessageConfig) {
 // SendMessage tries to send a message with the configuration
 // from the MessageConfig and returns message ID if it succeeds.
 func (client *Client) SendMessage(config MessageConfig) (int64, *Error) {
-	var req Request
-	req.Token = config.AccessToken
-	req.Method = "messages.send"
-	v := url.Values{}
-
-	if config.PeerID != 0 {
-		v.Add("peer_id", fmt.Sprintf("%d", config.PeerID))
-	}
-
-	if config.UserID != 0 {
-		v.Add("user_id", fmt.Sprintf("%d", config.UserID))
-	}
-
-	if config.Domain != "" {
-		v.Add("domain", config.Domain)
-	}
-
-	if config.ChatID != 0 {
-		v.Add("chat_id", fmt.Sprintf("%d", config.RandomID))
-	}
-
-	if len(config.UserIDs) != 0 {
-		v.Add("user_ids", ConcatInt64ToString(config.UserIDs...))
-	}
+	values := config.Destination.Values()
 
 	if len(config.ForwardMessages) != 0 {
-		v.Add("forward_messages", ConcatInt64ToString(config.ForwardMessages...))
+		values.Add("forward_messages", ConcatInt64ToString(config.ForwardMessages...))
 	}
 
 	if config.StickerID != 0 {
-		v.Add("sticker_id", fmt.Sprintf("%d", config.StickerID))
+		values.Add("sticker_id", fmt.Sprintf("%d", config.StickerID))
 	}
 
 	if config.Message != "" {
-		v.Add("message", config.Message)
+		values.Add("message", config.Message)
 	}
 
 	if config.RandomID != 0 {
-		v.Add("random_id", fmt.Sprintf("%d", config.RandomID))
+		values.Add("random_id", fmt.Sprintf("%d", config.RandomID))
 	}
 
 	if config.geo {
-		v.Add("lat", strconv.FormatFloat(config.lat, 'f', -1, 64))
-		v.Add("long", strconv.FormatFloat(config.long, 'f', -1, 64))
+		values.Add("lat", strconv.FormatFloat(config.lat, 'f', -1, 64))
+		values.Add("long", strconv.FormatFloat(config.long, 'f', -1, 64))
 	}
 
-	req.Values = v
-	res, err := client.Do(req)
+	res, err := client.Do(NewRequest("messages.send", config.AccessToken, values))
 	if err != nil {
 		return 0, err
 	}
@@ -212,22 +141,13 @@ func (client *Client) SendMessage(config MessageConfig) (int64, *Error) {
 }
 
 // SetActivity changes the status of typing by user in the dialog.
-func (client *Client) SetActivity(config MessageConfig) *Error {
+func (client *Client) SetActivity(dst Destination) *Error {
 	values := url.Values{}
 
-	switch {
-	case config.Domain != "":
-		values.Add("user_id", config.Domain)
-	case config.UserID != 0:
-		values.Add("peer_id", strconv.FormatInt(config.UserID, 10))
-	case config.PeerID != 0:
-		values.Add("peer_id", strconv.FormatInt(config.PeerID, 10))
-	case config.ChatID != 0:
-		values.Add("peer_id", strconv.FormatInt(config.ChatID+chatOffset, 10))
-	case config.GroupID != 0:
-		values.Add("peer_id", strconv.FormatInt(-config.GroupID, 10))
-	default:
-		return NewError(ErrBadCode, "Wrong data")
+	if dst.GroupID != 0 {
+		values.Add("peer_id", strconv.FormatInt(-dst.GroupID, 10))
+	} else {
+		values = dst.Values()
 	}
 
 	values.Add("type", "typing")

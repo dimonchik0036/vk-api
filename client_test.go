@@ -7,7 +7,7 @@ func ExampleNewClientFromToken() {
 	if err := client.InitLongPoll(0, 2); err != nil {
 		log.Panic(err)
 	}
-
+	client.Log(true)
 	updates, _, err := client.GetLPUpdatesChan(100, LPConfig{25, LPModeAttachments})
 	if err != nil {
 		log.Panic(err)
@@ -18,9 +18,9 @@ func ExampleNewClientFromToken() {
 			continue
 		}
 
-		log.Printf("%d writes:[%s]", update.Message.FromID, update.Message.Text)
+		log.Printf("%s", update.Message.String())
 		if update.Message.Text == "/start" {
-			client.SendMessage(NewMessage(update.Message.FromID, "Hello!"))
+			client.SendMessage(NewMessage(NewDstFromUserID(update.Message.FromID), "Hello!"))
 		}
 
 	}

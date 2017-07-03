@@ -203,15 +203,11 @@ type LPChan <-chan LPUpdate
 // InitLongPoll establishes a new connection
 // to long poll server.
 func (client *Client) InitLongPoll(needPts int, lpVersion int) *Error {
-	var req Request
-	req.Method = "messages.getLongPollServer"
+	values := url.Values{}
+	values.Add("need_pts", strconv.FormatInt(int64(needPts), 10))
+	values.Add("lp_version", strconv.FormatInt(int64(lpVersion), 10))
 
-	v := url.Values{}
-	v.Add("need_pts", strconv.FormatInt(int64(needPts), 10))
-	v.Add("lp_version", strconv.FormatInt(int64(lpVersion), 10))
-	req.Values = v
-
-	res, err := client.Do(req)
+	res, err := client.Do(NewRequest("messages.getLongPollServer", "", values))
 	if err != nil {
 		return err
 	}
@@ -261,7 +257,7 @@ func (client *Client) GetLPAnswer(config LPConfig) (LPAnswer, error) {
 	values.Add("version", strconv.FormatInt(int64(client.LongPoll.LPVersion), 10))
 
 	if client.apiClient.Log {
-		client.apiClient.logPrintf("Request: %s", NewRequest("getLongPoll", "", values).JS())
+		client.apiClient.Logger.Printf("Request: %s", NewRequest("getLongPoll", "", values).JS())
 	}
 
 	u := url.URL{}
@@ -290,12 +286,12 @@ func (client *Client) GetLPAnswer(config LPConfig) (LPAnswer, error) {
 			panic(err)
 		}
 
-		client.apiClient.logPrintf("Response: %s", string(b))
+		client.apiClient.Logger.Printf("Response: %s", string(b))
 		reader = bytes.NewReader(b)
 	}
 
 	if res.StatusCode != http.StatusOK {
-		client.apiClient.logPrintf("Response error: %s", res.Status)
+		client.apiClient.Logger.Printf("Response error: %s", res.Status)
 		return LPAnswer{}, errors.New(res.Status)
 	}
 
@@ -324,9 +320,7 @@ func (client *Client) GetLPUpdates(config LPConfig) ([]LPUpdate, error) {
 			var LPUpdate LPUpdate
 			LPUpdate.Update = answer.Updates[i]
 			if err := LPUpdate.UnmarshalUpdate(config.Mode); err != nil {
-				if client.apiClient.Log {
-					client.apiClient.Logger.Println(err)
-				}
+				client.apiClient.logPrintf("%s", err.Error())
 			}
 
 			LPUpdates = append(LPUpdates, LPUpdate)
@@ -336,21 +330,15 @@ func (client *Client) GetLPUpdates(config LPConfig) ([]LPUpdate, error) {
 		return LPUpdates, nil
 	case 1:
 		client.LongPoll.Timestamp = answer.Timestamp
-		if client.apiClient.Log {
-			client.apiClient.Logger.Println("Timestamp updated")
-		}
-
+		client.apiClient.logPrintf("Timestamp updated")
 	case 2, 3:
 		if err := client.InitLongPoll(client.LongPoll.NeedPts, client.LongPoll.LPVersion); err != nil {
-			if client.apiClient.Log {
-				client.apiClient.Logger.Println("Long poll update error:", err)
-			}
+			client.apiClient.logPrintf("Long poll update error: %s", err.Error())
+
 			return []LPUpdate{}, err
 		}
 
-		if client.apiClient.Log {
-			client.apiClient.Logger.Println("Long poll config updated")
-		}
+		client.apiClient.logPrintf("Long poll config updated")
 	}
 
 	return []LPUpdate{}, nil
@@ -367,7 +355,7 @@ func (client *Client) GetLPUpdatesChan(bufSize int, config LPConfig) (LPChan, *b
 		for run {
 			updates, err := client.GetLPUpdates(config)
 			if err != nil {
-				log.Println("Failed to get updates, retrying in 3 seconds...")
+				log.Print("Failed to get updates, retrying in 3 seconds...")
 				time.Sleep(time.Second * 3)
 
 				continue
