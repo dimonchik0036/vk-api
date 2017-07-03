@@ -1,17 +1,22 @@
+<div align="center">
+
+[![](https://github.com/Dimonchik0036/vk-api/blob/master/logo.png)]()  
+
 # VK API? GO!
 [![Build Status](https://travis-ci.org/Dimonchik0036/vk-api.svg?branch=master)](https://travis-ci.org/Dimonchik0036/vk-api)
 [![GoDoc](https://godoc.org/github.com/Dimonchik0036/vk-api?status.svg)](https://godoc.org/github.com/Dimonchik0036/vk-api)
+[![Language](https://img.shields.io/badge/Language-Golang-blue.svg)]()
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/Dimonchik0036/vk-api/new/master/LICENSE)  
   
-![](https://github.com/Dimonchik0036/vk-api/blob/master/logo.png)  
 Work with Vkontakte API for StandAlone application on The Go Programming Language.  
 
-Current VK API version `5.65`.
+# Usage / Installation
+</div>
 
-# Installation
+## Installation
 `go get -u github.com/Dimonchik0036/vk-api`
 
-# Example  
+## Example  
 Displays incoming messages. If this is a "/start", then a "Hello!" message will be sent.
 ```go
 package main
@@ -22,12 +27,14 @@ import (
 )
 
 func main() {
-	client, _ := vkapi.NewClientFromToken("<access_token>")
-	/*client, err := vkapi.NewClientFromLogin("<username>", "<password>", vkapi.ScopeMessages)
+	//client, err := vkapi.NewClientFromLogin("<username>", "<password>", vkapi.ScopeMessages)
+	client, err := vkapi.NewClientFromToken("<access_token>")
 	if err != nil {
 	    log.Panic(err)
-	}*/
+	}
 	
+	client.Log(true)
+
 	if err := client.InitLongPoll(0, 2); err != nil {
 		log.Panic(err)
 	}
@@ -42,11 +49,16 @@ func main() {
 			continue
 		}
 
-		log.Printf("%d writes:[%s]", update.Message.FromID, update.Message.Text)
+		log.Printf("%s", update.Message.String())
 		if update.Message.Text == "/start" {
-			client.SendMessage(vkapi.NewMessage(update.Message.FromID, "Hello!"))
+			client.SendMessage(vkapi.NewMessage(vkapi.NewDstFromUserID(update.Message.FromID), "Hello!"))
 		}
 
 	}
 }
 ```
+## Technical Details 
+* API version 5.65.
+
+## Contributions
+Chat me [VK](https://vk.com/dimonchik0036)/[Telegram](https://t.me/dimonchik0036) for detailed steps.
