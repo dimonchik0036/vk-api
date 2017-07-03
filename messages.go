@@ -199,7 +199,7 @@ func (client *Client) SendMessage(config MessageConfig) (int64, *Error) {
 
 	req.Values = v
 	res, err := client.Do(req)
-	if err != nil && !err.Code.Is(ErrZero) {
+	if err != nil {
 		return 0, err
 	}
 

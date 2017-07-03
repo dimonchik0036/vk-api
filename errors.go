@@ -105,20 +105,6 @@ func (e ExecuteError) Error() string {
 	return fmt.Sprintf("%s: %s (%d)", e.Method, e.Message, e.Code)
 }
 
-//Is returns true if this is an error.
-func (e ServerError) Is(err error) bool {
-	if error(e) == err {
-		return true
-	}
-	if another, ok := err.(ServerError); ok {
-		return another == e
-	}
-	if another, ok := err.(Error); ok {
-		return another.Code == e
-	}
-	return false
-}
-
 func (s ServerError) String() string {
 	return fmt.Sprintf("%d", s)
 }
