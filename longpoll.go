@@ -38,6 +38,9 @@ const (
 )
 
 const (
+	LPCodeSetFlags      = 1
+	LPCodeAddFlags      = 2
+	LPCodeDelFlags      = 3
 	LPCodeNewMessage    = 4
 	LPCodeFriendOnline  = 8
 	LPCodeFriendOffline = 9
@@ -82,6 +85,12 @@ type LPUpdate struct {
 // Event returns event as a string.
 func (update *LPUpdate) Event() (event string) {
 	switch update.Code {
+	case LPCodeSetFlags:
+		event = "Setting flags"
+	case LPCodeAddFlags:
+		event = "Adding flags"
+	case LPCodeDelFlags:
+		event = "Deleting flags"
 	case LPCodeNewMessage:
 		event = "New message"
 	case LPCodeFriendOnline:
@@ -95,32 +104,83 @@ func (update *LPUpdate) Event() (event string) {
 	return
 }
 
+// IsSetFlags will return true if the message flags have been replaced.
+func (update *LPUpdate) IsSetFlags() bool {
+	return update.Code == LPCodeSetFlags
+}
+
+// IsAddFlags will return true if the message flags have been added.
+func (update *LPUpdate) IsAddFlags() bool {
+	return update.Code == LPCodeAddFlags
+}
+
+// IsDelFlags will return true if the message flags have been deleted.
+func (update *LPUpdate) IsDelFlags() bool {
+	return update.Code == LPCodeDelFlags
+}
+
+// IsNewMessage will return true if it is a new message.
+func (update *LPUpdate) IsNewMessage() bool {
+	return update.Code == LPCodeNewMessage
+}
+
+// IsFriendOnline will return true if a friend became online.
+func (update *LPUpdate) IsFriendOnline() bool {
+	return update.Code == LPCodeFriendOnline
+}
+
+// IsFriendOffline will return true if a friend became offline.
+func (update *LPUpdate) IsFriendOffline() bool {
+	return update.Code == LPCodeFriendOffline
+}
+
 // UnmarshalUpdate unmarshal a LPUpdate.
 func (update *LPUpdate) UnmarshalUpdate(mode int) error {
 	update.Code = int64(update.Update[0].(float64))
+	updateLen := len(update.Update)
 	switch update.Code {
-	case LPCodeNewMessage:
+	case LPCodeSetFlags, LPCodeAddFlags, LPCodeDelFlags, LPCodeNewMessage:
 		message := new(LPMessage)
-
+		message.Type = update.Code
 		message.ID = int64(update.Update[1].(float64))
 		message.Flags = int64(update.Update[2].(float64))
+		if updateLen == 3 {
+			update.Message = message
+			break
+		}
+
 		message.FromID = int64(update.Update[3].(float64))
+		if updateLen == 4 {
+			update.Message = message
+			break
+		}
+
 		message.Timestamp = Timestamp(update.Update[4].(float64))
 		message.Text = html.UnescapeString(update.Update[5].(string))
 
-		if mode&LPModeAttachments == LPModeAttachments {
+		if updateLen == 6 {
+			update.Message = message
+			break
+		}
+
+		if mode&LPModeAttachments != 0 {
 			message.Attachments = make(map[string]string)
 			for key, value := range update.Update[6].(map[string]interface{}) {
 				message.Attachments[key] = value.(string)
 			}
-		}
-
-		if mode&LPModeRandomID&LPModeRandomID == (LPModeAttachments | LPModeRandomID) {
-			message.RandomID = int64(update.Update[7].(float64))
 		} else {
-			if mode&LPModeRandomID == LPModeRandomID {
+			if mode&LPModeRandomID != 0 {
 				message.RandomID = int64(update.Update[6].(float64))
 			}
+		}
+
+		if updateLen == 7 {
+			update.Message = message
+			break
+		}
+
+		if mode&LPModeRandomID&LPModeAttachments != 0 {
+			message.RandomID = int64(update.Update[7].(float64))
 		}
 
 		update.Message = message
@@ -130,9 +190,9 @@ func (update *LPUpdate) UnmarshalUpdate(mode int) error {
 		}
 
 		friend := new(LPFriendNotification)
-		friend.Code = update.Code
+		friend.Activity = update.Code
 		friend.ID = -int64(update.Update[1].(float64))
-		friend.Arg = int(update.Update[2].(float64)) & 0xFF
+		friend.Arg = int64(update.Update[2].(float64)) & 0xFF
 		friend.Timestamp = Timestamp(update.Update[3].(float64))
 
 		update.FriendNotification = friend
@@ -144,6 +204,7 @@ func (update *LPUpdate) UnmarshalUpdate(mode int) error {
 // LPMessage is new messages
 // that come from long poll server.
 type LPMessage struct {
+	Type        int64
 	ID          int64
 	Flags       int64
 	FromID      int64
@@ -224,14 +285,14 @@ type LPFriendNotification struct {
 	// If the friend offline, then
 	// 0 - friend logout,
 	// 1 - offline by timeout.
-	Arg       int
+	Arg       int64
 	Timestamp Timestamp
-	Code      int64
+	Activity  int64
 }
 
 // Status returns event as a string.
 func (friend *LPFriendNotification) Status() (status string) {
-	switch friend.Code {
+	switch friend.Activity {
 	case LPCodeFriendOnline:
 		status = "Online"
 	case LPCodeFriendOffline:
