@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html"
 	"io"
 	"io/ioutil"
 	"log"
@@ -15,17 +16,17 @@ import (
 )
 
 const (
-	LPFlagMessageUnread = 1 << iota
-	LPFlagMessageOutBox
-	LPFlagMessageReplied
-	LPFlagMessageImportant
-	LPFlagMessageChat
-	LPFlagMessageFriends
-	LPFlagMessageSpam
-	LPFlagMessageDeleted
-	LPFlagMessageFixed
-	LPFlagMessageMedia
-	LPFlagMessageHidden = 65536
+	LPMessageFlagUnread = 1 << iota
+	LPMessageFlagOutBox
+	LPMessageFlagReplied
+	LPMessageFlagImportant
+	LPMessageFlagChat
+	LPMessageFlagFriends
+	LPMessageFlagSpam
+	LPMessageFlagDeleted
+	LPMessageFlagFixed
+	LPMessageFlagMedia
+	LPMessageFlagHidden = 65536
 )
 
 const (
@@ -105,7 +106,7 @@ func (update *LPUpdate) UnmarshalUpdate(mode int) error {
 		message.Flags = int64(update.Update[2].(float64))
 		message.FromID = int64(update.Update[3].(float64))
 		message.Timestamp = Timestamp(update.Update[4].(float64))
-		message.Text = update.Update[5].(string)
+		message.Text = html.UnescapeString(update.Update[5].(string))
 
 		if mode&LPModeAttachments == LPModeAttachments {
 			message.Attachments = make(map[string]string)
@@ -154,6 +155,62 @@ type LPMessage struct {
 
 func (message *LPMessage) String() string {
 	return fmt.Sprintf("Message (%d):`%s` from (%d) at %s", message.ID, message.Text, message.FromID, message.Timestamp)
+}
+
+// Unread will return true if the message is not read.
+func (message *LPMessage) Unread() bool {
+	return message.Flags&LPMessageFlagUnread != 0
+}
+
+// Outbox will return true if this is an outgoing message.
+func (message *LPMessage) Outbox() bool {
+	return message.Flags&LPMessageFlagOutBox != 0
+}
+
+// Replied will be returned true if an answer was created to the message.
+func (message *LPMessage) Replied() bool {
+	return message.Flags&LPMessageFlagReplied != 0
+}
+
+// Important will return true if this is a marked message.
+func (message *LPMessage) Important() bool {
+	return message.Flags&LPMessageFlagImportant != 0
+}
+
+// FromChat will return true if this message was sent via chat.
+func (message *LPMessage) FromChat() bool {
+	return message.Flags&LPMessageFlagChat != 0
+}
+
+// FromFriends will return true if this message was sent from friends.
+// Not applicable for messages from group conversations.
+func (message *LPMessage) FromFriends() bool {
+	return message.Flags&LPMessageFlagFriends != 0
+}
+
+// IsSpam will return true if it is spam.
+func (message *LPMessage) IsSpam() bool {
+	return message.Flags&LPMessageFlagSpam != 0
+}
+
+// Deleted will return true if the message was deleted (in the Recycle Bin).
+func (message *LPMessage) Deleted() bool {
+	return message.Flags&LPMessageFlagDeleted != 0
+}
+
+// Fixed will return true if the message has been scanned by the user for spam.
+func (message *LPMessage) Fixed() bool {
+	return message.Flags&LPMessageFlagFixed != 0
+}
+
+// ContainsMedia will return true if the message contains multimedia content.
+func (message *LPMessage) ContainsMedia() bool {
+	return message.Flags&LPMessageFlagMedia != 0
+}
+
+// IsHidden will return true if it is a welcome message from the community.
+func (message *LPMessage) IsHidden() bool {
+	return message.Flags&LPMessageFlagHidden != 0
 }
 
 // LPFriendNotification is a notification
