@@ -76,6 +76,19 @@ func NewClientFromLogin(username string, password string, scope int64) (client *
 	return
 }
 
+// NewClientFromApplication creates a new *Client instance
+// and allows you to pass a custom application.
+func NewClientFromApplication(app Application) (client *Client, err error) {
+	client = new(Client)
+	client.apiClient = NewApiClient()
+	err = client.apiClient.Authenticate(app)
+	if err != nil {
+		return nil, err
+	}
+
+	return
+}
+
 // Do makes a request to a specific endpoint with our request
 // and returns response.
 func (client *Client) Do(request Request) (response *Response, err *Error) {
