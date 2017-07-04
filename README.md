@@ -50,7 +50,7 @@ func main() {
 		}
 
 		log.Printf("%s", update.Message.String())
-		if update.Message.Text == "/start" {
+		if update.IsNewMessage() && update.Message.Text == "/start" {
 			client.SendMessage(vkapi.NewMessage(vkapi.NewDstFromUserID(update.Message.FromID), "Hello!"))
 		}
 
