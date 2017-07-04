@@ -21,7 +21,7 @@ func ExampleNewClientFromToken() {
 		}
 
 		log.Printf("%s", update.Message.String())
-		if update.Message.Text == "/start" {
+		if update.IsNewMessage() && update.Message.Text == "/start" {
 			client.SendMessage(NewMessage(NewDstFromUserID(update.Message.FromID), "Hello!"))
 		}
 
