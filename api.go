@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	defaultVersion = "5.65"
+	defaultVersion = "5.67"
 	defaultScheme  = "https"
 	defaultHost    = "api.vk.com"
 	defaultPath    = "method"
@@ -58,16 +58,18 @@ type APIClient struct {
 
 // SetAccessToken sets access token to APIClient.
 func (api *APIClient) SetAccessToken(token string) {
-	api.AccessToken = &AccessToken{token,
-		0,
-		0,
-		"",
-		"",
-		"",
-		"",
-		"",
-		"",
-		""}
+	api.AccessToken = &AccessToken{
+		AccessToken:      token,
+		ExpiresIn:        0,
+		UserID:           0,
+		Error:            "",
+		ErrorDescription: "",
+		RedirectUri:      "",
+		CaptchaSid:       "",
+		CaptchaImg:       "",
+		ValidationType:   "",
+		PhoneMask:        "",
+	}
 }
 
 // Values returns values from this APIClient.
@@ -96,14 +98,14 @@ func (api *APIClient) Authenticate(application Application) (err error) {
 // NewApiClient creates a new *APIClient instance.
 func NewApiClient() *APIClient {
 	client := &APIClient{
-		defaultHTTPClient(),
-		defaultVersion,
-		nil,
-		"",
-		false,
-		log.New(os.Stdout, "", log.LstdFlags),
-		defaultHTTPS,
-		defaultLanguage,
+		httpClient:  defaultHTTPClient(),
+		APIVersion:  defaultVersion,
+		AccessToken: nil,
+		secureToken: "",
+		Log:         false,
+		Logger:      log.New(os.Stdout, "", log.LstdFlags),
+		HTTPS:       defaultHTTPS,
+		Language:    defaultLanguage,
 	}
 
 	return client

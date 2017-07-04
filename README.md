@@ -58,7 +58,7 @@ func main() {
 }
 ```
 ## Technical Details 
-* API version 5.65.
+* API version 5.67.
 
 ## Contributions
 Chat me [VK](https://vk.com/dimonchik0036)/[Telegram](https://t.me/dimonchik0036) for detailed steps.
