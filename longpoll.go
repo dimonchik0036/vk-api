@@ -38,12 +38,17 @@ const (
 )
 
 const (
-	LPCodeSetFlags      = 1
-	LPCodeAddFlags      = 2
-	LPCodeDelFlags      = 3
-	LPCodeNewMessage    = 4
-	LPCodeFriendOnline  = 8
-	LPCodeFriendOffline = 9
+	LPCodeMessageSetFlags      = 1
+	LPCodeMessageAddFlags      = 2
+	LPCodeMessageDelFlags      = 3
+	LPCodeNewMessage           = 4
+	LPCodeReadAllInboxMessage  = 6
+	LPCodeReadAllOutboxMessage = 7
+	LPCodeFriendOnline         = 8
+	LPCodeFriendOffline        = 9
+	LPCodeDialogDelFlags       = 10
+	LPCodeDialogSetFlags       = 11
+	LPCodeDialogAddFlags       = 12
 )
 
 const (
@@ -85,38 +90,44 @@ type LPUpdate struct {
 // Event returns event as a string.
 func (update *LPUpdate) Event() (event string) {
 	switch update.Code {
-	case LPCodeSetFlags:
-		event = "Setting flags"
-	case LPCodeAddFlags:
-		event = "Adding flags"
-	case LPCodeDelFlags:
-		event = "Deleting flags"
+	case LPCodeMessageSetFlags:
+		event = "Setting the message flags"
+	case LPCodeMessageAddFlags:
+		event = "Adding the message flags"
+	case LPCodeMessageDelFlags:
+		event = "Deleting the message flags"
 	case LPCodeNewMessage:
 		event = "New message"
 	case LPCodeFriendOnline:
 		event = "Friend online"
 	case LPCodeFriendOffline:
 		event = "Friend offline"
+	case LPCodeDialogDelFlags:
+		event = "Deleting the dialog flags"
+	case LPCodeDialogSetFlags:
+		event = "Setting the dialog flags"
+	case LPCodeDialogAddFlags:
+		event = "Adding the dialog flags"
 	default:
-		event = "Undefined event"
+		event = fmt.Sprintf("Undefined event (%d)", update.Code)
 	}
 
 	return
 }
 
-// IsSetFlags will return true if the message flags have been replaced.
-func (update *LPUpdate) IsSetFlags() bool {
-	return update.Code == LPCodeSetFlags
+// IsMessageSetFlags will return true if the message flags have been replaced.
+func (update *LPUpdate) IsMessageSetFlags() bool {
+	return update.Code == LPCodeMessageSetFlags
 }
 
-// IsAddFlags will return true if the message flags have been added.
-func (update *LPUpdate) IsAddFlags() bool {
-	return update.Code == LPCodeAddFlags
+// IsMessageAddFlags will return true if the message flags have been added.
+func (update *LPUpdate) IsMessageAddFlags() bool {
+	return update.Code == LPCodeMessageAddFlags
 }
 
-// IsDelFlags will return true if the message flags have been deleted.
-func (update *LPUpdate) IsDelFlags() bool {
-	return update.Code == LPCodeDelFlags
+// IsMessageDelFlags will return true if the message flags have been deleted.
+func (update *LPUpdate) IsMessageDelFlags() bool {
+	return update.Code == LPCodeMessageDelFlags
 }
 
 // IsNewMessage will return true if it is a new message.
@@ -134,12 +145,27 @@ func (update *LPUpdate) IsFriendOffline() bool {
 	return update.Code == LPCodeFriendOffline
 }
 
+// IsDialogDelFlags will return true if the dialog flags have been deleted.
+func (update *LPUpdate) IsDialogDelFlags() bool {
+	return update.Code == LPCodeDialogDelFlags
+}
+
+// IsDialogSetFlags will return true if the dialog flags have been replaced.
+func (update *LPUpdate) IsDialogSetFlags() bool {
+	return update.Code == LPCodeDialogSetFlags
+}
+
+// IsDialogAddFlags will return true if the dialog flags have been added.
+func (update *LPUpdate) IsDialogAddFlags() bool {
+	return update.Code == LPCodeDialogAddFlags
+}
+
 // UnmarshalUpdate unmarshal a LPUpdate.
 func (update *LPUpdate) UnmarshalUpdate(mode int) error {
 	update.Code = int64(update.Update[0].(float64))
 	updateLen := len(update.Update)
 	switch update.Code {
-	case LPCodeSetFlags, LPCodeAddFlags, LPCodeDelFlags, LPCodeNewMessage:
+	case LPCodeMessageSetFlags, LPCodeMessageAddFlags, LPCodeMessageDelFlags, LPCodeNewMessage:
 		message := new(LPMessage)
 		message.Type = update.Code
 		message.ID = int64(update.Update[1].(float64))
@@ -182,6 +208,13 @@ func (update *LPUpdate) UnmarshalUpdate(mode int) error {
 		if mode&LPModeRandomID&LPModeAttachments != 0 {
 			message.RandomID = int64(update.Update[7].(float64))
 		}
+
+		update.Message = message
+	case LPCodeDialogDelFlags, LPCodeDialogSetFlags, LPCodeDialogAddFlags:
+		message := new(LPMessage)
+		message.Type = update.Code
+		message.FromID = int64(update.Update[1].(float64))
+		message.Flags = int64(update.Update[2].(float64))
 
 		update.Message = message
 	case LPCodeFriendOnline, LPCodeFriendOffline:
@@ -306,6 +339,30 @@ func (friend *LPFriendNotification) Status() (status string) {
 
 func (friend *LPFriendNotification) String() string {
 	return fmt.Sprintf("Friend (%d) was %s at %s", friend.ID, friend.Status(), friend.Timestamp)
+}
+
+// Platform returns the name of the platform.
+func (friend *LPFriendNotification) Platform() (platform string) {
+	switch friend.Arg % 0xFF {
+	case LPPlatformMobile:
+		platform = "Mobile"
+	case LPPlatformIPhone:
+		platform = "IPhone"
+	case LPPlatformIPad:
+		platform = "IPad"
+	case LPPlatformAndroid:
+		platform = "Android"
+	case LPPlatformWPhone:
+		platform = "Windows Phone"
+	case LPPlatformWindows:
+		platform = "Windows"
+	case LPPlatformWeb:
+		platform = "Web"
+	default:
+		platform = "Undefined platform"
+	}
+
+	return
 }
 
 // LPAnswer is response from long poll server.
