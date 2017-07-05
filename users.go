@@ -189,10 +189,10 @@ type CropPhoto struct {
 }
 
 type Rect struct {
-	x  float64
-	x2 float64
-	y  float64
-	y2 float64
+	X  float64
+	X2 float64
+	Y  float64
+	Y2 float64
 }
 
 type LastSeen struct {

@@ -96,13 +96,13 @@ type MessageConfig struct {
 	Destination     Destination    `json:"destination"`
 	RandomID        int64          `json:"random_id"`
 	Message         string         `json:"message"`
-	geo             bool           `json:"-"`
-	lat             float64        `json:"lat"`
-	long            float64        `json:"long"`
 	ForwardMessages []int64        `json:"forward_messages"`
 	StickerID       int64          `json:"sticker_id"`
 	AccessToken     string         `json:"access_token"`
 	Attachment      *[]interface{} `json:"attachment"`
+	geo             bool           `json:"-"`
+	lat             float64        `json:"lat"`
+	long            float64        `json:"long"`
 }
 
 // SetGeo sets the location.
