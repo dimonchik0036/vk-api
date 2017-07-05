@@ -21,30 +21,31 @@ type Dialog struct {
 
 // Message describes the structure of the message.
 type Message struct {
-	Id          int64      `json:"id"`
-	UserId      int64      `json:"user_id"`
-	FromId      int64      `json:"from_id"`
-	Date        int64      `json:"date"`
-	ReadState   int        `json:"read_state"`
-	Out         int        `json:"out"`
-	Title       string     `json:"title"`
-	Body        string     `json:"body"`
-	FwdMessages *[]Message `json:"fwd_messages"`
-	Emoji       int        `json:"emoji"`
-	Important   int        `json:"important"`
-	Deleted     int        `json:"deleted"`
-	RandomId    int64      `json:"random_id"`
-	ChatId      int64      `json:"chat_id"`
-	ChatActive  []int64    `json:"chat_active"`
-	UsersCount  int        `json:"users_count"`
-	AdminId     int64      `json:"admin_id"`
-	Action      string     `json:"action"`
-	ActionMid   int64      `json:"action_mid"`   /*идентификатор пользователя (если > 0) или email (если < 0), которого пригласили или исключили (для служебных сообщений с action = chat_invite_user или chat_kick_user). */
-	ActionEmail string     `json:"action_email"` /*email, который пригласили или исключили (для служебных сообщений с action = chat_invite_user или chat_kick_user и отрицательным action_mid). */
-	ActionText  string     `json:"action_text"`  /*название беседы (для служебных сообщений с action = chat_create или chat_title_update). */
-	Photo50     string     `json:"photo_50"`
-	Photo100    string     `json:"photo_100"`
-	Photo200    string     `json:"photo_200"`
+	ID          int64          `json:"id"`
+	UserID      int64          `json:"user_id"`
+	FromID      int64          `json:"from_id"`
+	Date        Timestamp      `json:"date"`
+	ReadState   int            `json:"read_state"`
+	Out         int            `json:"out"`
+	Title       string         `json:"title"`
+	Body        string         `json:"body"`
+	FwdMessages *[]Message     `json:"fwd_messages"`
+	Emoji       int            `json:"emoji"`
+	Important   int            `json:"important"`
+	Deleted     int            `json:"deleted"`
+	RandomID    int64          `json:"random_id"`
+	ChatID      int64          `json:"chat_id"`
+	ChatActive  []int64        `json:"chat_active"`
+	UsersCount  int            `json:"users_count"`
+	AdminID     int64          `json:"admin_id"`
+	Action      string         `json:"action"`
+	ActionMid   int64          `json:"action_mid"`
+	ActionEmail string         `json:"action_email"`
+	ActionText  string         `json:"action_text"`
+	Photo50     string         `json:"photo_50"`
+	Photo100    string         `json:"photo_100"`
+	Photo200    string         `json:"photo_200"`
+	Attachments *[]interface{} `json:"attachments"`
 	/*Geo       *Geo {
 		type (string) — тип места;
 		coordinates (string) — координаты места;
@@ -59,7 +60,6 @@ type Message struct {
 		city (string) — название города;
 	} `json:"geo"`*/
 
-	/*Attachments *[]Attachments `json:"attachments"`*/
 	/*PushSettings *PushSettings { настройки уведомлений для беседы, если они есть.	} `json:"push_settings"`*/
 	/*string	тип действия (если это служебное сообщение). Возможные значения:
 
@@ -72,19 +72,37 @@ type Message struct {
 
 }
 
+// IsDeleted will return true if the message was deleted (in the Recycle Bin).
+func (message *Message) IsDeleted() bool {
+	return message.Deleted != 0
+}
+
+// IsOutbox will return true if this is an outgoing message.
+func (message *Message) IsOutbox() bool {
+	return message.Out != 0
+}
+
+func (message *Message) String() string {
+	if !message.IsDeleted() {
+		return fmt.Sprintf("Message (%d):`%s` from (%d) at %s", message.ID, message.Body, message.FromID, message.Date)
+	} else {
+		return fmt.Sprintf("Message (%d) was deleted.", message.ID)
+	}
+}
+
 // MessageConfig contains the data
 // necessary to send a message.
 type MessageConfig struct {
-	Destination     Destination `json:"destination"`
-	RandomID        int64       `json:"random_id"`
-	Message         string      `json:"message"`
-	geo             bool        `json:"-"`
-	lat             float64     `json:"lat"`
-	long            float64     `json:"long"`
-	ForwardMessages []int64     `json:"forward_messages"`
-	StickerID       int64       `json:"sticker_id"`
-	AccessToken     string      `json:"access_token"`
-	//attachment *[]Attachment `json:"attachment"`
+	Destination     Destination    `json:"destination"`
+	RandomID        int64          `json:"random_id"`
+	Message         string         `json:"message"`
+	geo             bool           `json:"-"`
+	lat             float64        `json:"lat"`
+	long            float64        `json:"long"`
+	ForwardMessages []int64        `json:"forward_messages"`
+	StickerID       int64          `json:"sticker_id"`
+	AccessToken     string         `json:"access_token"`
+	Attachment      *[]interface{} `json:"attachment"`
 }
 
 // SetGeo sets the location.
@@ -157,4 +175,29 @@ func (client *Client) SetActivity(dst Destination) *Error {
 	}
 
 	return nil
+}
+
+// GetMessagesByID returns messages by ID.
+func (client *Client) GetMessagesByID(previewLength int64, ids ...int64) ([]Message, *Error) {
+	values := url.Values{}
+	if previewLength != 0 {
+		values.Add("preview_length", strconv.FormatInt(previewLength, 10))
+	}
+
+	values.Add("message_ids", ConcatInt64ToString(ids...))
+
+	res, err := client.Do(NewRequest("messages.getById", "", values))
+	if err != nil {
+		return []Message{}, err
+	}
+
+	answer := struct {
+		Items []Message `json:"items"`
+	}{}
+
+	if err := res.To(&answer); err != nil {
+		return []Message{}, NewError(ErrBadCode, err.Error())
+	}
+
+	return answer.Items, nil
 }
