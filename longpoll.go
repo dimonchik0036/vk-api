@@ -49,6 +49,13 @@ const (
 	LPCodeDialogDelFlags       = 10
 	LPCodeDialogSetFlags       = 11
 	LPCodeDialogAddFlags       = 12
+	LPCodeDelAllMessage        = 13
+	LPCodeChangeChat           = 51
+	LPCodeTypingInDialog       = 61
+	LPCodeTypingInChat         = 62
+	LPCodeCall                 = 70
+	LPCodeUnreadMessage        = 80
+	LPCodeChangeNotification   = 114
 )
 
 const (
@@ -98,6 +105,10 @@ func (update *LPUpdate) Event() (event string) {
 		event = "Deleting the message flags"
 	case LPCodeNewMessage:
 		event = "New message"
+	case LPCodeReadAllInboxMessage:
+		event = "You read inbox message"
+	case LPCodeReadAllOutboxMessage:
+		event = "You read outbox message"
 	case LPCodeFriendOnline:
 		event = "Friend online"
 	case LPCodeFriendOffline:
@@ -108,6 +119,20 @@ func (update *LPUpdate) Event() (event string) {
 		event = "Setting the dialog flags"
 	case LPCodeDialogAddFlags:
 		event = "Adding the dialog flags"
+	case LPCodeDelAllMessage:
+		event = "Deleting all messages in the dialog"
+	case LPCodeChangeChat:
+		event = "Chat parameters changed"
+	case LPCodeTypingInDialog:
+		event = "User typing text in the dialog"
+	case LPCodeTypingInChat:
+		event = "User typing text in the chat"
+	case LPCodeCall:
+		event = "User called"
+	case LPCodeUnreadMessage:
+		event = "Number of unread messages"
+	case LPCodeChangeNotification:
+		event = "Notifications setting changed"
 	default:
 		event = fmt.Sprintf("Undefined event (%d)", update.Code)
 	}
