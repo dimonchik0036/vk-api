@@ -50,7 +50,7 @@ type Application struct {
 	// GrantType - Authorization type, must be equal to `password`
 	GrantType string `json:"grant_type"`
 
-	// ClientID - Id of your application
+	// ClientID - ID of your application
 	ClientID string `json:"client_id"`
 
 	// ClientSecret - Secret key of your application

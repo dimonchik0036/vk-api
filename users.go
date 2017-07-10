@@ -1,6 +1,7 @@
 package vkapi
 
 import (
+	"fmt"
 	"net/url"
 	"strings"
 )
@@ -50,7 +51,7 @@ func (client *Client) InitMyProfile(fieldArgs ...string) *Error {
 // Users describes the structure of the users.
 type Users struct {
 	// Full description at https://vk.com/dev/objects/user
-	Id          int64  `json:"id"`
+	ID          int64  `json:"id"`
 	FirstName   string `json:"first_name"`
 	LastName    string `json:"last_name"`
 	Deactivated string `json:"deactivated"`
@@ -139,6 +140,10 @@ type Users struct {
 	Universities           *[]Universities `json:"universities"`
 	Verified               int             `json:"verified"`
 	WallComments           int             `json:"wall_comments"`
+}
+
+func (user *Users) MainInfo(sep string) string {
+	return fmt.Sprintf("ID: %d%sFirst name: %s%sLast name: %s", user.ID, sep, user.FirstName, sep, user.LastName)
 }
 
 type Career struct {

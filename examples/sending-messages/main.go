@@ -17,7 +17,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if _, err := client.SendMessage(vkapi.NewMessage(vkapi.NewDstFromUserID(client.User.Id), "Hello!")); err != nil {
+	if _, err := client.SendMessage(vkapi.NewMessage(vkapi.NewDstFromUserID(client.User.ID), "Hello!")); err != nil {
 		log.Println(err)
 	}
 }
