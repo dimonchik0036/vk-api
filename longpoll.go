@@ -254,6 +254,19 @@ func (update *LPUpdate) UnmarshalUpdate(mode int) error {
 		friend.Timestamp = Timestamp(update.Update[3].(float64))
 
 		update.FriendNotification = friend
+	case LPCodeReadAllInboxMessage, LPCodeReadAllOutboxMessage, LPCodeDelAllMessage:
+		message := new(LPMessage)
+		message.Type = update.Code
+		message.FromID = int64(update.Update[1].(float64))
+		message.ID = int64(update.Update[2].(float64))
+
+		update.Message = message
+	case LPCodeTypingInDialog:
+		message := new(LPMessage)
+		message.Type = update.Code
+		message.FromID = int64(update.Update[1].(float64))
+
+		update.Message = message
 	}
 
 	return nil
@@ -274,6 +287,10 @@ type LPMessage struct {
 
 func (message *LPMessage) String() string {
 	return fmt.Sprintf("Message (%d):`%s` from (%d) at %s", message.ID, message.Text, message.FromID, message.Timestamp)
+}
+
+func (message *LPMessage) LastMessage() int64 {
+	return message.ID
 }
 
 // Unread will return true if the message is not read.
