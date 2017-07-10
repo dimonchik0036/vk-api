@@ -60,15 +60,6 @@ type APIClient struct {
 func (api *APIClient) SetAccessToken(token string) {
 	api.AccessToken = &AccessToken{
 		AccessToken:      token,
-		ExpiresIn:        0,
-		UserID:           0,
-		Error:            "",
-		ErrorDescription: "",
-		RedirectUri:      "",
-		CaptchaSid:       "",
-		CaptchaImg:       "",
-		ValidationType:   "",
-		PhoneMask:        "",
 	}
 }
 
@@ -100,9 +91,6 @@ func NewApiClient() *APIClient {
 	client := &APIClient{
 		httpClient:  defaultHTTPClient(),
 		APIVersion:  defaultVersion,
-		AccessToken: nil,
-		secureToken: "",
-		Log:         false,
 		Logger:      log.New(os.Stdout, "", log.LstdFlags),
 		HTTPS:       defaultHTTPS,
 		Language:    defaultLanguage,

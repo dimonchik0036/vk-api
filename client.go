@@ -24,6 +24,15 @@ type Client struct {
 	//	BoardComment
 }
 
+// GetToken will return access_token
+func (client *Client)  GetToken() (string) {
+	if client.apiClient == nil || client.apiClient.AccessToken == nil{
+		return ""
+	}
+
+	return client.apiClient.AccessToken.AccessToken
+}
+
 // SetLanguage sets the language in which different data will be returned,
 // for example, names of countries and cities.
 func (client *Client) SetLanguage(lang string) error {
@@ -96,8 +105,9 @@ func (client *Client) Do(request Request) (response *Response, err *Error) {
 		return nil, NewError(ErrBadCode, ErrApiClientNotFound)
 	}
 
-	if request.Token == "" && client.apiClient.AccessToken != nil {
-		request.Token = client.apiClient.AccessToken.AccessToken
+	t := client.GetToken()
+	if request.Token == "" && t != "" {
+		request.Token = t
 	}
 
 	return client.apiClient.Do(request)
