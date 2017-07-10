@@ -28,9 +28,9 @@ func (client *Client) SetMyStatus(text string) (err error) {
 
 // Status returns the status from user or group page.
 func (client *Client) Status(dst Destination) (text string, err error) {
-	res, err := client.Do(NewRequest("status.get", "", dst.Values()))
+	res, error := client.Do(NewRequest("status.get", "", dst.Values()))
 	if err != nil {
-		return "", err
+		return "", error
 	}
 
 	Text := struct {
