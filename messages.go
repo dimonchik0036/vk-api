@@ -19,6 +19,16 @@ type Dialog struct {
 	RealOffset int64    `json:"real_offset"`
 }
 
+// Chat
+type Chat struct {
+	ID int64 `json:"id"`
+	Type string `json:"type"`
+	Title string `json:"title"`
+	AdminID int64 `json:"admin_id"`
+	Users []int64 `json:"users"`
+	//Other
+}
+
 // Message describes the structure of the message.
 type Message struct {
 	ID          int64          `json:"id"`
@@ -200,4 +210,22 @@ func (client *Client) GetMessagesByID(previewLength int64, ids ...int64) ([]Mess
 	}
 
 	return answer.Items, nil
+}
+
+func (client *Client) GetChat(chatIDs ... int64) ([]Chat, *Error) {
+	if len(chatIDs) == 0 {
+		return []Chat{}, NewError(ErrBadCode, "Need chatID")
+	}
+	values := url.Values{}
+	values.Add("chat_ids", ConcatInt64ToString(chatIDs...))
+	res, err := client.Do(NewRequest("messages.getChat","", values))
+	if err != nil {
+		return []Chat{}, err
+	}
+	var chats []Chat
+	if err := res.To(&chats); err != nil {
+		return []Chat{}, NewError(ErrBadCode, err.Error())
+	}
+
+	return chats, nil
 }
