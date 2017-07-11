@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"time"
 )
@@ -185,6 +186,16 @@ func (update *LPUpdate) IsDialogAddFlags() bool {
 	return update.Code == LPCodeDialogAddFlags
 }
 
+func unescaped(string string) string {
+	string = html.UnescapeString(string)
+	reg, err := regexp.Compile("<br>")
+	if err != nil {
+		return string
+	}
+
+	return reg.ReplaceAllLiteralString(string, "\n")
+}
+
 // UnmarshalUpdate unmarshal a LPUpdate.
 func (update *LPUpdate) UnmarshalUpdate(mode int) error {
 	update.Code = int64(update.Update[0].(float64))
@@ -207,7 +218,7 @@ func (update *LPUpdate) UnmarshalUpdate(mode int) error {
 		}
 
 		message.Timestamp = Timestamp(update.Update[4].(float64))
-		message.Text = html.UnescapeString(update.Update[5].(string))
+		message.Text = unescaped(update.Update[5].(string))
 
 		if updateLen == 6 {
 			update.Message = message
