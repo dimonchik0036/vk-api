@@ -146,6 +146,20 @@ func (user *Users) MainInfo(sep string) string {
 	return fmt.Sprintf("ID: %d%sFirst name: %s%sLast name: %s", user.ID, sep, user.FirstName, sep, user.LastName)
 }
 
+func (client *Client) GetUsername(dst Destination, sep string) ([]string, *Error) {
+	users, err := client.UsersInfo(dst)
+	if err != nil {
+		return []string{}, err
+	}
+
+	var string []string
+	for _, u := range users {
+		string = append(string, u.MainInfo(sep))
+	}
+
+	return string, nil
+}
+
 type Career struct {
 	GroupId   int64  `json:"group_id"`
 	Company   string `json:"company"`
