@@ -21,11 +21,11 @@ type Dialog struct {
 
 // Chat
 type Chat struct {
-	ID int64 `json:"id"`
-	Type string `json:"type"`
-	Title string `json:"title"`
-	AdminID int64 `json:"admin_id"`
-	Users []int64 `json:"users"`
+	ID      int64   `json:"id"`
+	Type    string  `json:"type"`
+	Title   string  `json:"title"`
+	AdminID int64   `json:"admin_id"`
+	Users   []int64 `json:"users"`
 	//Other
 }
 
@@ -212,13 +212,13 @@ func (client *Client) GetMessagesByID(previewLength int64, ids ...int64) ([]Mess
 	return answer.Items, nil
 }
 
-func (client *Client) GetChat(chatIDs ... int64) ([]Chat, *Error) {
+func (client *Client) GetChat(chatIDs ...int64) ([]Chat, *Error) {
 	if len(chatIDs) == 0 {
 		return []Chat{}, NewError(ErrBadCode, "Need chatID")
 	}
 	values := url.Values{}
 	values.Add("chat_ids", ConcatInt64ToString(chatIDs...))
-	res, err := client.Do(NewRequest("messages.getChat","", values))
+	res, err := client.Do(NewRequest("messages.getChat", "", values))
 	if err != nil {
 		return []Chat{}, err
 	}
@@ -228,4 +228,18 @@ func (client *Client) GetChat(chatIDs ... int64) ([]Chat, *Error) {
 	}
 
 	return chats, nil
+}
+
+func (client *Client) MarkMessageAsRead(messageIDs ...int64) *Error {
+	if len(messageIDs) == 0 {
+		return NewError(ErrBadCode, "Need chatID")
+	}
+
+	values := url.Values{}
+	values.Add("message_ids", ConcatInt64ToString(messageIDs...))
+	if _, err := client.Do(NewRequest("messages.markAsRead", "", values)); err != nil {
+		return err
+	}
+
+	return nil
 }
