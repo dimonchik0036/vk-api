@@ -202,9 +202,9 @@ type Country struct {
 }
 
 type CropPhoto struct {
-	/*Photo struct{} `json:"photo"`*/
-	Crop *Rect `json:"crop"`
-	Rect *Rect `json:"rect"`
+	Photo *Photo `json:"photo"`
+	Crop  *Rect  `json:"crop"`
+	Rect  *Rect  `json:"rect"`
 }
 
 type Rect struct {

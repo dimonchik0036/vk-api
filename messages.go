@@ -31,31 +31,31 @@ type Chat struct {
 
 // Message describes the structure of the message.
 type Message struct {
-	ID          int64          `json:"id"`
-	UserID      int64          `json:"user_id"`
-	FromID      int64          `json:"from_id"`
-	Date        Timestamp      `json:"date"`
-	ReadState   int            `json:"read_state"`
-	Out         int            `json:"out"`
-	Title       string         `json:"title"`
-	Body        string         `json:"body"`
-	FwdMessages *[]Message     `json:"fwd_messages"`
-	Emoji       int            `json:"emoji"`
-	Important   int            `json:"important"`
-	Deleted     int            `json:"deleted"`
-	RandomID    int64          `json:"random_id"`
-	ChatID      int64          `json:"chat_id"`
-	ChatActive  []int64        `json:"chat_active"`
-	UsersCount  int            `json:"users_count"`
-	AdminID     int64          `json:"admin_id"`
-	Action      string         `json:"action"`
-	ActionMid   int64          `json:"action_mid"`
-	ActionEmail string         `json:"action_email"`
-	ActionText  string         `json:"action_text"`
-	Photo50     string         `json:"photo_50"`
-	Photo100    string         `json:"photo_100"`
-	Photo200    string         `json:"photo_200"`
-	Attachments *[]interface{} `json:"attachments"`
+	ID          int64         `json:"id"`
+	UserID      int64         `json:"user_id"`
+	FromID      int64         `json:"from_id"`
+	Date        Timestamp     `json:"date"`
+	ReadState   int           `json:"read_state"`
+	Out         int           `json:"out"`
+	Title       string        `json:"title"`
+	Body        string        `json:"body"`
+	FwdMessages *[]Message    `json:"fwd_messages"`
+	Emoji       int           `json:"emoji"`
+	Important   int           `json:"important"`
+	Deleted     int           `json:"deleted"`
+	RandomID    int64         `json:"random_id"`
+	ChatID      int64         `json:"chat_id"`
+	ChatActive  []int64       `json:"chat_active"`
+	UsersCount  int           `json:"users_count"`
+	AdminID     int64         `json:"admin_id"`
+	Action      string        `json:"action"`
+	ActionMid   int64         `json:"action_mid"`
+	ActionEmail string        `json:"action_email"`
+	ActionText  string        `json:"action_text"`
+	Photo50     string        `json:"photo_50"`
+	Photo100    string        `json:"photo_100"`
+	Photo200    string        `json:"photo_200"`
+	Attachments *[]Attachment `json:"attachments"`
 	/*Geo       *Geo {
 		type (string) — тип места;
 		coordinates (string) — координаты места;
