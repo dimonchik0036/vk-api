@@ -59,7 +59,7 @@ type APIClient struct {
 // SetAccessToken sets access token to APIClient.
 func (api *APIClient) SetAccessToken(token string) {
 	api.AccessToken = &AccessToken{
-		AccessToken:      token,
+		AccessToken: token,
 	}
 }
 
@@ -89,11 +89,11 @@ func (api *APIClient) Authenticate(application Application) (err error) {
 // NewApiClient creates a new *APIClient instance.
 func NewApiClient() *APIClient {
 	client := &APIClient{
-		httpClient:  defaultHTTPClient(),
-		APIVersion:  defaultVersion,
-		Logger:      log.New(os.Stdout, "", log.LstdFlags),
-		HTTPS:       defaultHTTPS,
-		Language:    defaultLanguage,
+		httpClient: defaultHTTPClient(),
+		APIVersion: defaultVersion,
+		Logger:     log.New(os.Stdout, "", log.LstdFlags),
+		HTTPS:      defaultHTTPS,
+		Language:   defaultLanguage,
 	}
 
 	return client

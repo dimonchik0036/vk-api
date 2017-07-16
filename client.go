@@ -25,8 +25,8 @@ type Client struct {
 }
 
 // GetToken will return access_token
-func (client *Client)  GetToken() (string) {
-	if client.apiClient == nil || client.apiClient.AccessToken == nil{
+func (client *Client) GetToken() string {
+	if client.apiClient == nil || client.apiClient.AccessToken == nil {
 		return ""
 	}
 
