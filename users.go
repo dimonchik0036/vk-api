@@ -6,6 +6,12 @@ import (
 	"strings"
 )
 
+// VKUser describes the structure of the vk user.
+type VKUser struct {
+	Me      Users
+	Friends []Users
+}
+
 // UsersInfo returns array Users with the selected fields
 // if the request was successful.
 func (client *Client) UsersInfo(dst Destination, fieldArgs ...string) (users []Users, err *Error) {
@@ -33,7 +39,7 @@ func (client *Client) UsersInfo(dst Destination, fieldArgs ...string) (users []U
 	return
 }
 
-// InitMyProfile fills in the selected Client.User data.
+// InitMyProfile fills in the selected Client.VKUser data.
 func (client *Client) InitMyProfile(fieldArgs ...string) *Error {
 	users, err := client.UsersInfo(Destination{}, fieldArgs...)
 	if err != nil {
@@ -44,7 +50,7 @@ func (client *Client) InitMyProfile(fieldArgs ...string) *Error {
 		return NewError(ErrBadCode, "An unexpected error occurred.")
 	}
 
-	client.User = users[0]
+	client.VKUser.Me = users[0]
 	return nil
 }
 
@@ -146,7 +152,7 @@ func (user *Users) MainInfo(sep string) string {
 	return fmt.Sprintf("ID: %d%sFirst name: %s%sLast name: %s", user.ID, sep, user.FirstName, sep, user.LastName)
 }
 
-func (client *Client) GetUsername(dst Destination, sep string) ([]string, *Error) {
+func (client *Client) GetMainInfo(dst Destination, sep string) ([]string, *Error) {
 	users, err := client.UsersInfo(dst)
 	if err != nil {
 		return []string{}, err
@@ -284,7 +290,7 @@ const (
 	UserFieldBirthdayDate           = "bdate"
 	UserFieldBlacklisted            = "blacklisted"
 	UserFieldBlacklistedByMe        = "blacklisted_by_me"
-	UserFieldBoks                   = "books"
+	UserFieldBooks                  = "books"
 	UserFieldCanPost                = "can_post"
 	UserFieldCanSeeAllPosts         = "can_see_all_posts"
 	UserFieldCanSeeAudio            = "can_see_audio"
@@ -360,7 +366,7 @@ var UserFieldAll = []string{UserFieldAbout,
 	UserFieldBirthdayDate,
 	UserFieldBlacklisted,
 	UserFieldBlacklistedByMe,
-	UserFieldBoks,
+	UserFieldBooks,
 	UserFieldCanPost,
 	UserFieldCanSeeAllPosts,
 	UserFieldCanSeeAudio,

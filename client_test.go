@@ -44,5 +44,5 @@ func ExampleNewClientFromApplication() {
 		log.Panic(err.Error())
 	}
 
-	log.Printf("My name is %s", client.User.FirstName)
+	log.Printf("My name is %s", client.VKUser.Me.FirstName)
 }

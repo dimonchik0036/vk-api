@@ -17,7 +17,7 @@ func ExampleClient_SendMessage() {
 	}
 
 	// Sends a message to himself.
-	if _, err := client.SendMessage(NewMessage(NewDstFromUserID(client.User.ID), "Hello!")); err != nil {
+	if _, err := client.SendMessage(NewMessage(NewDstFromUserID(client.VKUser.Me.ID), "Hello!")); err != nil {
 		log.Println(err)
 	}
 }

@@ -11,8 +11,8 @@ import (
 // Client allows you to transparently send requests to API server.
 type Client struct {
 	apiClient *APIClient
-	User      Users
 	LongPoll  *LongPoll
+	VKUser    VKUser
 	//	Group
 	//	Wall
 	//	WallComment
