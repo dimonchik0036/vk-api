@@ -37,6 +37,10 @@ type Request struct {
 
 // NewRequest creates a new Request instance.
 func NewRequest(method string, token string, values url.Values) (req Request) {
+	if values == nil {
+		values = url.Values{}
+	}
+
 	req.Method = method
 	req.Token = token
 	req.Values = values
