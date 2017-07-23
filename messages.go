@@ -103,16 +103,16 @@ func (message *Message) String() string {
 // MessageConfig contains the data
 // necessary to send a message.
 type MessageConfig struct {
-	Destination     Destination    `json:"destination"`
-	RandomID        int64          `json:"random_id"`
-	Message         string         `json:"message"`
-	ForwardMessages []int64        `json:"forward_messages"`
-	StickerID       int64          `json:"sticker_id"`
-	AccessToken     string         `json:"access_token"`
-	Attachment      *[]interface{} `json:"attachment"`
-	geo             bool           `json:"-"`
-	lat             float64        `json:"lat"`
-	long            float64        `json:"long"`
+	Destination     Destination `json:"destination"`
+	RandomID        int64       `json:"random_id"`
+	Message         string      `json:"message"`
+	ForwardMessages []int64     `json:"forward_messages"`
+	StickerID       int64       `json:"sticker_id"`
+	AccessToken     string      `json:"access_token"`
+	Attachment      string      `json:"attachment"`
+	geo             bool        `json:"-"`
+	lat             float64     `json:"lat"`
+	long            float64     `json:"long"`
 }
 
 // SetGeo sets the location.
@@ -153,6 +153,10 @@ func (client *Client) SendMessage(config MessageConfig) (int64, *Error) {
 	if config.geo {
 		values.Add("lat", strconv.FormatFloat(config.lat, 'f', -1, 64))
 		values.Add("long", strconv.FormatFloat(config.long, 'f', -1, 64))
+	}
+
+	if config.Attachment != "" {
+		values.Add("attachment", config.Attachment)
 	}
 
 	res, err := client.Do(NewRequest("messages.send", config.AccessToken, values))

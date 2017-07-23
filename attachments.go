@@ -1,5 +1,7 @@
 package vkapi
 
+import "fmt"
+
 type Attachment struct {
 	Type      string    `json:"type"`
 	AccessKey string    `json:"access_key"`
@@ -171,4 +173,37 @@ func (v *Video) GetMaxPreview() string {
 	}
 
 	return ""
+}
+
+func (client *Client) AddAttachment(fieldname string, file interface{}) string {
+	switch fieldname {
+	case "photo":
+		server, err := client.GetMessagesUploadServer()
+		if err != nil {
+			return ""
+		}
+
+		res, err := client.UploadFile(server.UploadURL, fieldname, file)
+		if err != nil {
+			return ""
+		}
+
+		photo, err := client.SaveMessagesPhoto(res)
+		if err != nil {
+			return ""
+		}
+
+		return fmt.Sprintf("photo%d_%d", photo.OwnerID, photo.ID)
+	default:
+		return ""
+	}
+}
+
+func (client *Client) SendPhoto(dst Destination, file interface{}) (int64, *Error) {
+	config := MessageConfig{
+		Destination: dst,
+		Attachment:  client.AddAttachment("photo", file),
+	}
+
+	return client.SendMessage(config)
 }
