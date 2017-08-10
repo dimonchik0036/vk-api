@@ -1,6 +1,7 @@
 package vkapi
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -81,6 +82,10 @@ type Error struct {
 	CaptchaSid string          `json:"captcha_sid,omitempty"`
 	CaptchaImg string          `json:"captcha_img,omitempty"`
 	Request    Request         `json:"-"`
+}
+
+func (e Error) ToError() error {
+	return errors.New(fmt.Sprintf("%s (%d)", e.Message, e.Code))
 }
 
 // NewError makes *Error from our ServerError and description.
