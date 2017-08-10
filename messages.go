@@ -56,19 +56,7 @@ type Message struct {
 	Photo100    string        `json:"photo_100"`
 	Photo200    string        `json:"photo_200"`
 	Attachments *[]Attachment `json:"attachments"`
-	/*Geo       *Geo {
-		type (string) — тип места;
-		coordinates (string) — координаты места;
-		place (object) — описание места (если оно добавлено), объект с полями:
-		id (integer) — идентификатор места (если назначено);
-		title (string) — название места (если назначено);
-		latitude (number) — географическая широта;
-		longitude (number) — географическая долгота;
-		created (integer) — дата создания (если назначено);
-		icon (string) — URL изображения-иконки;
-		country (string) — название страны;
-		city (string) — название города;
-	} `json:"geo"`*/
+	Geo         *Geo          `json:"geo"`
 
 	/*PushSettings *PushSettings { настройки уведомлений для беседы, если они есть.	} `json:"push_settings"`*/
 	/*string	тип действия (если это служебное сообщение). Возможные значения:
