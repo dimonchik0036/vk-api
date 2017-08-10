@@ -1,5 +1,10 @@
 package vkapi
 
+import (
+	"net/url"
+	"strings"
+)
+
 const (
 	PostTypePost     = "post"
 	PostTypeCopy     = "copy"
@@ -32,6 +37,45 @@ type Wall struct {
 	CanEdit      int           `json:"can_edit"`
 	IsPinned     int           `json:"is_pinned"`
 	MarkedAsAds  int           `json:"marked_as_ads"`
+}
+
+func (client *Client) GetWall(dst Destination, count int64, offset int64, filter string, extended bool, fields ...string) (int64, []Wall, []Users, []Group, *Error) {
+	values := url.Values{}
+	switch {
+	case dst.UserID != 0:
+		values.Set("owner_id", ConcatInt64ToString(dst.UserID))
+	case dst.GroupID != 0:
+		values.Set("owner_id", ConcatInt64ToString(-dst.GroupID))
+	case dst.Domain != "":
+		values.Set("domain", dst.Domain)
+	}
+
+	values.Set("count", ConcatInt64ToString(count))
+	values.Set("offset", ConcatInt64ToString(offset))
+	values.Set("filter", filter)
+
+	if extended {
+		values.Set("extended", "1")
+		values.Set("fields", strings.Join(fields, ","))
+	}
+
+	res, err := client.Do(NewRequest("wall.get", "", values))
+	if err != nil {
+		return 0, []Wall{}, []Users{}, []Group{}, err
+	}
+
+	Answer := struct {
+		Count    int64   `json:"count"`
+		Items    []Wall  `json:"items"`
+		Profiles []Users `json:"profiles"`
+		Groups   []Group `json:"groups"`
+	}{}
+
+	if err := res.To(&Answer); err != nil {
+		return 0, []Wall{}, []Users{}, []Group{}, NewError(ErrBadCode, err.Error())
+	}
+
+	return Answer.Count, Answer.Items, Answer.Profiles, Answer.Groups, nil
 }
 
 type Comments struct {
