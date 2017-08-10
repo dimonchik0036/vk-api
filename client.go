@@ -13,7 +13,7 @@ type Client struct {
 	apiClient *APIClient
 	LongPoll  *LongPoll
 	VKUser    VKUser
-	//	Group
+	VKGroup   VKGroup
 	//	Wall
 	//	WallComment
 	//  Message
