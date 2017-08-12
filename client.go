@@ -64,6 +64,13 @@ func (client *Client) Log(flag bool) error {
 	return nil
 }
 
+// NewClientFromAPIClient creates a new *Client instance.
+func NewClientFromAPIClient(apiClient *APIClient) (client *Client, err error) {
+	client = new(Client)
+	client.apiClient = apiClient
+	return
+}
+
 // NewClientFromToken creates a new *Client instance.
 func NewClientFromToken(token string) (client *Client, err error) {
 	client = new(Client)
