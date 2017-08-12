@@ -3,7 +3,6 @@ package vkapi
 import (
 	"log"
 	"net/http"
-	"TelegramBot/vkapi"
 )
 
 func ExampleNewClientFromToken() {
