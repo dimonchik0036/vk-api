@@ -134,13 +134,13 @@ type Destination struct {
 
 func (dst Destination) GetPeerID() int64 {
 	switch {
-	case dst.PeerID != 0 :
+	case dst.PeerID != 0:
 		return dst.PeerID
 	case dst.UserID != 0:
 		return dst.UserID
 	case dst.ChatID != 0:
-		return 2000000000+dst.ChatID
-	case dst.GroupID != 0 :
+		return 2000000000 + dst.ChatID
+	case dst.GroupID != 0:
 		return -dst.GroupID
 	default:
 		return 0

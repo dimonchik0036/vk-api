@@ -175,34 +175,57 @@ func (v *Video) GetMaxPreview() string {
 	return ""
 }
 
-func (client *Client) AddAttachment(fieldname string, file interface{}) string {
-	switch fieldname {
-	case "photo":
-		server, err := client.GetMessagesUploadServer()
-		if err != nil {
-			return ""
-		}
-
-		res, err := client.UploadFile(server.UploadURL, fieldname, file)
-		if err != nil {
-			return ""
-		}
-
-		photo, err := client.SaveMessagesPhoto(res)
-		if err != nil {
-			return ""
-		}
-
-		return fmt.Sprintf("photo%d_%d", photo.OwnerID, photo.ID)
-	default:
+func (client *Client) AddAttachmentPhoto(file interface{}) string {
+	server, err := client.GetMessagesUploadServerForPhoto()
+	if err != nil {
 		return ""
 	}
+
+	res, err := client.UploadFile(server.UploadURL, "photo", file)
+	if err != nil {
+		return ""
+	}
+
+	photo, err := client.SaveMessagesPhoto(res)
+	if err != nil {
+		return ""
+	}
+
+	return fmt.Sprintf("photo%d_%d", photo.OwnerID, photo.ID)
+}
+
+func (client *Client) AddAttachmentDoc(fieldName string, peerID int64, title string, file interface{}) string {
+	server, err := client.GetMessagesUploadServerForDoc(fieldName, peerID)
+	if err != nil {
+		return ""
+	}
+
+	res, err := client.UploadFile(server.UploadURL, "file", file)
+	if err != nil {
+		return ""
+	}
+
+	doc, err := client.SaveMessagesDoc(res.File, title)
+	if err != nil {
+		return ""
+	}
+
+	return fmt.Sprintf("doc%d_%d", doc.OwnerID, doc.ID)
 }
 
 func (client *Client) SendPhoto(dst Destination, file interface{}) (int64, *Error) {
 	config := MessageConfig{
 		Destination: dst,
-		Attachment:  client.AddAttachment("photo", file),
+		Attachment:  client.AddAttachmentPhoto(file),
+	}
+
+	return client.SendMessage(config)
+}
+
+func (client *Client) SendDoc(dst Destination, title string, file interface{}) (int64, *Error) {
+	config := MessageConfig{
+		Destination: dst,
+		Attachment:  client.AddAttachmentDoc("doc", dst.GetPeerID(), title, file),
 	}
 
 	return client.SendMessage(config)

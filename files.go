@@ -31,10 +31,11 @@ type ServerResponse struct {
 	Response
 	Server int64  `json:"server"`
 	Photo  string `json:"photo"`
+	File   string `json:"file"`
 	Hash   string `json:"hash"`
 }
 
-func (client *Client) UploadFile(url string, fieldname string, file interface{}) (ServerResponse, *Error) {
+func (client *Client) UploadFile(url string, fieldName string, file interface{}) (ServerResponse, *Error) {
 	ms := multipartstreamer.New()
 
 	switch f := file.(type) {
@@ -50,13 +51,13 @@ func (client *Client) UploadFile(url string, fieldname string, file interface{})
 			return ServerResponse{}, NewError(ErrBadCode, err.Error())
 		}
 
-		ms.WriteReader(fieldname, fileHandle.Name(), fi.Size(), fileHandle)
+		ms.WriteReader(fieldName, fileHandle.Name(), fi.Size(), fileHandle)
 	case FileBytes:
 		buf := bytes.NewBuffer(f.Bytes)
-		ms.WriteReader(fieldname, f.Name, int64(len(f.Bytes)), buf)
+		ms.WriteReader(fieldName, f.Name, int64(len(f.Bytes)), buf)
 	case FileReader:
 		if f.Size != -1 {
-			ms.WriteReader(fieldname, f.Name, f.Size, f.Reader)
+			ms.WriteReader(fieldName, f.Name, f.Size, f.Reader)
 
 			break
 		}
@@ -68,7 +69,7 @@ func (client *Client) UploadFile(url string, fieldname string, file interface{})
 
 		buf := bytes.NewBuffer(data)
 
-		ms.WriteReader(fieldname, f.Name, int64(len(data)), buf)
+		ms.WriteReader(fieldName, f.Name, int64(len(data)), buf)
 	default:
 		return ServerResponse{}, NewError(ErrBadCode, "Bad input")
 	}
@@ -90,7 +91,7 @@ func (client *Client) UploadFile(url string, fieldname string, file interface{})
 	if err != nil {
 		return ServerResponse{}, NewError(ErrBadCode, err.Error())
 	}
-	client.apiClient.logPrintf("upload %s: %s", fieldname, string(bytes))
+	client.apiClient.logPrintf("upload %s: %s", fieldName, string(bytes))
 
 	response := ServerResponse{}
 	if err := json.Unmarshal(bytes, &response); err != nil {
@@ -110,7 +111,7 @@ type UploadServerPhoto struct {
 	AlbumID int64 `json:"album_id"`
 }
 
-func (client *Client) GetMessagesUploadServer() (server UploadServerPhoto, err *Error) {
+func (client *Client) GetMessagesUploadServerForPhoto() (server UploadServerPhoto, err *Error) {
 	res, err := client.Do(NewRequest("photos.getMessagesUploadServer", "", nil))
 	if err != nil {
 		return UploadServerPhoto{}, err
@@ -121,6 +122,41 @@ func (client *Client) GetMessagesUploadServer() (server UploadServerPhoto, err *
 	}
 
 	return
+}
+
+func (client *Client) GetMessagesUploadServerForDoc(fiendName string, peerID int64) (server UploadServer, err *Error) {
+	values := url.Values{}
+	values.Add("peer_id", ConcatInt64ToString(peerID))
+	values.Add("type", fiendName)
+
+	res, err := client.Do(NewRequest("docs.getMessagesUploadServer", "", values))
+	if err != nil {
+		return UploadServer{}, err
+	}
+
+	if err := res.To(&server); err != nil {
+		return UploadServer{}, NewError(ErrBadCode, err.Error())
+	}
+
+	return
+}
+
+func (client *Client) SaveMessagesDoc(file string, title string) (Document, *Error) {
+	values := url.Values{}
+	values.Set("file", file)
+	values.Set("title", title)
+
+	res, err := client.Do(NewRequest("docs.save", "", values))
+	if err != nil {
+		return Document{}, err
+	}
+
+	var doc []Document
+	if err := res.To(&doc); err != nil {
+		return Document{}, NewError(ErrBadCode, err.Error())
+	}
+
+	return doc[0], nil
 }
 
 func (client *Client) SaveMessagesPhoto(response ServerResponse) (Photo, *Error) {
