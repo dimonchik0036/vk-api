@@ -45,12 +45,12 @@ func main() {
 	}
 
 	for update := range updates {
-		if update.Message == nil {
+		if update.Message == nil || !update.IsNewMessage() || update.Message.Outbox(){
 			continue
 		}
 
 		log.Printf("%s", update.Message.String())
-		if update.IsNewMessage() && update.Message.Text == "/start" {
+		if update.Message.Text == "/start" {
 			client.SendMessage(vkapi.NewMessage(vkapi.NewDstFromUserID(update.Message.FromID), "Hello!"))
 		}
 
