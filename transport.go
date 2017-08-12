@@ -111,6 +111,7 @@ func (api *APIClient) Do(request Request) (response *Response, error *Error) {
 
 		return nil, NewError(ErrBadCode, "HTTP fatal "+err.Error())
 	}
+	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
 		return nil, NewError(ErrBadResponseCode, res.Status)
