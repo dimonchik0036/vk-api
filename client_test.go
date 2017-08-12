@@ -2,6 +2,8 @@ package vkapi
 
 import (
 	"log"
+	"net/http"
+	"TelegramBot/vkapi"
 )
 
 func ExampleNewClientFromToken() {
@@ -26,6 +28,18 @@ func ExampleNewClientFromToken() {
 		}
 
 	}
+}
+
+func ExampleNewClientFromAPIClient() {
+	apiClient := NewApiClient()
+	apiClient.SetHTTPClient(http.DefaultClient)
+	apiClient.SetAccessToken("<access token>")
+	client, _ := NewClientFromAPIClient(apiClient)
+	if err := client.InitMyProfile(); err != nil {
+		log.Panic(err.Error())
+	}
+
+	log.Printf("My name is %s", client.VKUser.Me.FirstName)
 }
 
 func ExampleNewClientFromApplication() {
