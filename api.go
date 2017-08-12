@@ -45,15 +45,20 @@ type APIClient struct {
 	AccessToken *AccessToken
 	secureToken string
 
-	// If Log is true, APIClient will write logs.
-	Log    bool
-	Logger *log.Logger
+	// If log is true, APIClient will write logs.
+	log    bool
+	logger *log.Logger
 
 	// HTTPS defines if use https instead of http. 1 - use https. 0 - use http.
 	HTTPS string
 
 	// Language define the language in which different data will be returned, for example, names of countries and cities.
 	Language string
+}
+
+// SetLogger sets logger to APIClient.
+func (api *APIClient) SetLogger(logger *log.Logger) {
+	api.logger = logger
 }
 
 // SetHTTPClient sets HTTPClient to APIClient.
@@ -96,7 +101,7 @@ func NewApiClient() *APIClient {
 	client := &APIClient{
 		httpClient: defaultHTTPClient(),
 		APIVersion: defaultVersion,
-		Logger:     log.New(os.Stdout, "", log.LstdFlags),
+		logger:     log.New(os.Stdout, "", log.LstdFlags),
 		HTTPS:      defaultHTTPS,
 		Language:   defaultLanguage,
 	}
@@ -113,7 +118,7 @@ func ApiURL() (url url.URL) {
 }
 
 func (api *APIClient) logPrintf(format string, v ...interface{}) {
-	if api.Log {
-		api.Logger.Printf(format, v...)
+	if api.log {
+		api.logger.Printf(format, v...)
 	}
 }

@@ -484,8 +484,8 @@ func (client *Client) GetLPAnswer(config LPConfig) (LPAnswer, error) {
 	values.Add("mode", strconv.FormatInt(int64(config.Mode), 10))
 	values.Add("version", strconv.FormatInt(int64(client.LongPoll.LPVersion), 10))
 
-	if client.apiClient.Log {
-		client.apiClient.Logger.Printf("Request: %s", NewRequest("getLongPoll", "", values).JS())
+	if client.apiClient.log {
+		client.apiClient.logger.Printf("Request: %s", NewRequest("getLongPoll", "", values).JS())
 	}
 
 	u := url.URL{}
@@ -508,18 +508,18 @@ func (client *Client) GetLPAnswer(config LPConfig) (LPAnswer, error) {
 	var reader io.Reader
 	reader = res.Body
 
-	if client.apiClient.Log {
+	if client.apiClient.log {
 		b, err := ioutil.ReadAll(res.Body)
 		if err != nil {
 			panic(err)
 		}
 
-		client.apiClient.Logger.Printf("Response: %s", string(b))
+		client.apiClient.logger.Printf("Response: %s", string(b))
 		reader = bytes.NewReader(b)
 	}
 
 	if res.StatusCode != http.StatusOK {
-		client.apiClient.Logger.Printf("Response error: %s", res.Status)
+		client.apiClient.logger.Printf("Response error: %s", res.Status)
 		return LPAnswer{}, errors.New(res.Status)
 	}
 

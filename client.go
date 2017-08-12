@@ -50,7 +50,7 @@ func (client *Client) SetLogger(logger *log.Logger) error {
 		return errors.New(ErrApiClientNotFound)
 	}
 
-	client.apiClient.Logger = logger
+	client.apiClient.SetLogger(logger)
 	return nil
 }
 
@@ -60,7 +60,7 @@ func (client *Client) Log(flag bool) error {
 		return errors.New(ErrApiClientNotFound)
 	}
 
-	client.apiClient.Log = flag
+	client.apiClient.log = flag
 	return nil
 }
 
