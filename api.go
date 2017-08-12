@@ -56,6 +56,11 @@ type APIClient struct {
 	Language string
 }
 
+// SetHTTPClient sets HTTPClient to APIClient.
+func (api *APIClient) SetHTTPClient(httpClient HTTPClient) {
+	api.httpClient = httpClient
+}
+
 // SetAccessToken sets access token to APIClient.
 func (api *APIClient) SetAccessToken(token string) {
 	api.AccessToken = &AccessToken{
