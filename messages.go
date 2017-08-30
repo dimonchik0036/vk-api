@@ -82,7 +82,12 @@ func (message *Message) IsOutbox() bool {
 
 func (message *Message) String() string {
 	if !message.IsDeleted() {
-		return fmt.Sprintf("Message (%d):`%s` from (%d) at %s", message.ID, message.Body, message.FromID, message.Date)
+		return fmt.Sprintf("Message (%d):`%s` from (%d) at %s", message.ID, message.Body, func() int64 {
+			if message.FromID != 0 {
+				return message.FromID
+			}
+			return message.UserID
+		}(), message.Date)
 	} else {
 		return fmt.Sprintf("Message (%d) was deleted.", message.ID)
 	}
@@ -234,4 +239,35 @@ func (client *Client) MarkMessageAsRead(messageIDs ...int64) *Error {
 	}
 
 	return nil
+}
+
+// GetMessages returns inbox or outbox messages.
+func (client *Client) GetMessages(previewLength int64, offset int64, count int64, timeOffset int64, filters int, lastMessageID int64, inbox bool) ([]Message, *Error) {
+	values := url.Values{}
+	values.Set("preview_length", strconv.FormatInt(previewLength, 10))
+	values.Set("offset", strconv.FormatInt(offset, 10))
+	values.Set("time_offset", strconv.FormatInt(timeOffset, 10))
+	values.Set("count", strconv.FormatInt(count, 10))
+	values.Set("filters", strconv.Itoa(filters))
+	values.Set("last_message_id", strconv.FormatInt(lastMessageID, 10))
+	if inbox {
+		values.Set("out", "0")
+	} else {
+		values.Set("out", "1")
+	}
+
+	res, err := client.Do(NewRequest("messages.get", "", values))
+	if err != nil {
+		return []Message{}, err
+	}
+
+	answer := struct {
+		Items []Message `json:"items"`
+	}{}
+
+	if err := res.To(&answer); err != nil {
+		return []Message{}, NewError(ErrBadCode, err.Error())
+	}
+
+	return answer.Items, nil
 }
