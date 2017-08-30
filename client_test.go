@@ -3,6 +3,7 @@ package vkapi
 import (
 	"log"
 	"net/http"
+	"net/url"
 )
 
 func ExampleNewClientFromToken() {
@@ -58,4 +59,18 @@ func ExampleNewClientFromApplication() {
 	}
 
 	log.Printf("My name is %s", client.VKUser.Me.FirstName)
+}
+
+func ExampleClient_Do() {
+	client, _ := NewClientFromToken("<access token>")
+	values := url.Values{}
+	values.Set("user_id", "1")
+	values.Set("count", "10")
+
+	res, err := client.Do(NewRequest("groups.get", "", values))
+	if err != nil {
+		panic(err.Error())
+	}
+
+	println(res.Response.String())
 }
