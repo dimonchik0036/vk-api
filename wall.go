@@ -115,19 +115,19 @@ type Geo struct {
 	Type        string `json:"type"`
 	Coordinates string `json:"coordinates"`
 	Place       struct {
-		ID         int64  `json:"id"`
-		Title      string `json:"title"`
-		Latitude   int    `json:"latitude"`
-		Longitude  int    `json:"longitude"`
-		Created    int64  `json:"created"`
-		Icon       string `json:"icon"`
-		Country    string `json:"country"`
-		City       string `json:"city"`
-		Type       int    `json:"type"`
-		GroupID    int64  `json:"group_id"`
-		GroupPhoto int64  `json:"group_photo"`
-		Checkins   int64  `json:"checkins"`
-		Updated    int64  `json:"updated"`
-		Address    int64  `json:"address"`
+		ID         int64   `json:"id"`
+		Title      string  `json:"title"`
+		Latitude   float64 `json:"latitude"`
+		Longitude  float64 `json:"longitude"`
+		Created    int64   `json:"created"`
+		Icon       string  `json:"icon"`
+		Country    string  `json:"country"`
+		City       string  `json:"city"`
+		Type       int     `json:"type"`
+		GroupID    int64   `json:"group_id"`
+		GroupPhoto int64   `json:"group_photo"`
+		Checkins   int64   `json:"checkins"`
+		Updated    int64   `json:"updated"`
+		Address    int64   `json:"address"`
 	} `json:"place"`
 }
