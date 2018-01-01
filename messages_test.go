@@ -21,3 +21,22 @@ func ExampleClient_SendMessage() {
 		log.Println(err)
 	}
 }
+
+func ExampleClient_SendMessage2() {
+	client, err := NewClientFromLogin("<username>", "<password>", ScopeMessages)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	client.Log(true)
+	if err := client.InitMyProfile(); err != nil {
+		log.Fatal(err)
+	}
+
+	m := NewMessage(NewDstFromUserID(client.VKUser.Me.ID), "Hello!")
+	m.Attachment = client.AddAttachmentPhoto("photo.jpg")
+	if _, err := client.SendMessage(m); err != nil {
+		log.Println(err)
+	}
+
+}
