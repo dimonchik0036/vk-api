@@ -505,6 +505,11 @@ func (client *Client) GetLPAnswer(config LPConfig) (LPAnswer, error) {
 		return LPAnswer{}, err
 	}
 
+	if res.StatusCode != http.StatusOK {
+		client.apiClient.logger.Printf("Response error: %s", res.Status)
+		return LPAnswer{}, errors.New(res.Status)
+	}
+
 	var reader io.Reader
 	reader = res.Body
 
@@ -516,11 +521,6 @@ func (client *Client) GetLPAnswer(config LPConfig) (LPAnswer, error) {
 
 		client.apiClient.logger.Printf("Response: %s", string(b))
 		reader = bytes.NewReader(b)
-	}
-
-	if res.StatusCode != http.StatusOK {
-		client.apiClient.logger.Printf("Response error: %s", res.Status)
-		return LPAnswer{}, errors.New(res.Status)
 	}
 
 	var answer LPAnswer
