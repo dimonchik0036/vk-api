@@ -484,9 +484,7 @@ func (client *Client) GetLPAnswer(config LPConfig) (LPAnswer, error) {
 	values.Add("mode", strconv.FormatInt(int64(config.Mode), 10))
 	values.Add("version", strconv.FormatInt(int64(client.LongPoll.LPVersion), 10))
 
-	if client.apiClient.log {
-		client.apiClient.logger.Printf("Request: %s", NewRequest("getLongPoll", "", values).JS())
-	}
+	client.apiClient.logPrintf("Client Request: %s", NewRequest("getLongPoll", "", values).JS())
 
 	u := url.URL{}
 	u.Host = client.LongPoll.Host
@@ -501,13 +499,11 @@ func (client *Client) GetLPAnswer(config LPConfig) (LPAnswer, error) {
 
 	res, err := client.apiClient.httpClient.Do(req)
 	if err != nil {
-		client.apiClient.logPrintf("Response error: %s", err.Error())
 		return LPAnswer{}, err
 	}
 
 	if res.StatusCode != http.StatusOK {
-		client.apiClient.logger.Printf("Response error: %s", res.Status)
-		return LPAnswer{}, errors.New(res.Status)
+		return LPAnswer{}, errors.New("Bad status response: " + res.Status)
 	}
 
 	var reader io.Reader
@@ -519,7 +515,7 @@ func (client *Client) GetLPAnswer(config LPConfig) (LPAnswer, error) {
 			panic(err)
 		}
 
-		client.apiClient.logger.Printf("Response: %s", string(b))
+		client.apiClient.logger.Printf("Client Response: %s", string(b))
 		reader = bytes.NewReader(b)
 	}
 
@@ -549,6 +545,7 @@ func (client *Client) GetLPUpdates(config LPConfig) ([]LPUpdate, error) {
 			LPUpdate.Update = answer.Updates[i]
 			if err := LPUpdate.UnmarshalUpdate(config.Mode); err != nil {
 				client.apiClient.logPrintf("%s", err.Error())
+				continue
 			}
 
 			LPUpdates = append(LPUpdates, LPUpdate)
@@ -583,7 +580,7 @@ func (client *Client) GetLPUpdatesChan(bufSize int, config LPConfig) (LPChan, *b
 		for run {
 			updates, err := client.GetLPUpdates(config)
 			if err != nil {
-				log.Print("Failed to get updates, retrying in 3 seconds...")
+				log.Print("Failed to get updates, retrying in 3 seconds..., error: ", err.Error())
 				time.Sleep(time.Second * 3)
 
 				continue

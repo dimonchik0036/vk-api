@@ -86,9 +86,7 @@ func (api *APIClient) Do(request Request) (response *Response, error *Error) {
 
 	req := request.HTTP()
 
-	if api.log {
-		api.logger.Printf("Request: %s", request.JS())
-	}
+	api.logPrintf("API Request: %s", request.JS())
 
 	var res *http.Response
 	var err interface {
@@ -107,20 +105,17 @@ func (api *APIClient) Do(request Request) (response *Response, error *Error) {
 	}
 
 	if err != nil {
-		api.logPrintf("HTTP fatal %s", err)
-
 		return nil, NewError(ErrBadCode, "HTTP fatal "+err.Error())
 	}
+
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return nil, NewError(ErrBadResponseCode, res.Status)
+		return nil, NewError(ErrBadResponseCode, "Error fetching response: "+res.Status)
 	}
 
-	if response, error = Process(res.Body); error != nil {
-		api.logPrintf("Response error: %s", error.Error())
-	} else {
-		api.logPrintf("Response: %s", response.Response.String())
+	if response, error = Process(res.Body); error == nil {
+		api.logPrintf("API Response: %s", response.Response.String())
 	}
 
 	return
@@ -192,7 +187,7 @@ func (d vkResponseProcessor) To(response *Response) *Error {
 	}
 
 	if err := json.NewDecoder(d.input).Decode(response); err != nil {
-		return NewError(ErrBadCode, err.Error())
+		return NewError(ErrBadCode, "Error processing response: "+err.Error())
 	}
 
 	return response.Error
