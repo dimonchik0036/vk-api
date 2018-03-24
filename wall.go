@@ -42,7 +42,12 @@ type Wall struct {
 }
 
 func (w *Wall) URL() string {
-	return "https://vk.com/wall" + strconv.FormatInt(w.OwnerID, 10) + "_" + strconv.FormatInt(w.ID, 10)
+	var peerID int64
+	if w.OwnerID == 0 {
+		peerID = w.ToID
+	}
+
+	return "https://vk.com/wall" + strconv.FormatInt(peerID, 10) + "_" + strconv.FormatInt(w.ID, 10)
 }
 
 func (client *Client) GetWall(dst Destination, count int64, offset int64, filter string, extended bool, fields ...string) (int64, []Wall, []Users, []Group, *Error) {
