@@ -9,6 +9,7 @@ type Attachment struct {
 	Audio     *Audio    `json:"audio"`
 	Video     *Video    `json:"video"`
 	Document  *Document `json:"doc"`
+	Wall      *Wall     `json:"wall"`
 }
 
 type Photo struct {
