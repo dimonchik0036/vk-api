@@ -127,6 +127,9 @@ type Destination struct {
 	Domain      string   `json:"domain"`
 	ChatID      int64    `json:"chat_id"`
 	GroupID     int64    `json:"group_id"`
+	GroupName   string   `json:"group_id"`
+	GroupIDs    []int64  `json:"group_ids"`
+	GroupNames  []string `json:"group_ids"`
 	UserIDs     []int64  `json:"user_ids"`
 	ScreenName  string   `json:"user_id"`
 	ScreenNames []string `json:"user_ids"`
@@ -161,6 +164,12 @@ func (dst Destination) Values() (values url.Values) {
 		values.Add("chat_id", strconv.FormatInt(dst.ChatID, 10))
 	case dst.GroupID != 0:
 		values.Add("group_id", strconv.FormatInt(dst.GroupID, 10))
+	case dst.GroupName != "":
+		values.Add("group_id", dst.GroupName)
+	case len(dst.GroupIDs) != 0:
+		values.Add("group_ids", ConcatInt64ToString(dst.GroupIDs...))
+	case len(dst.GroupNames) > 0:
+		values.Add("group_ids", strings.Join(dst.GroupNames, ","))
 	case len(dst.UserIDs) != 0:
 		values.Add("user_ids", ConcatInt64ToString(dst.UserIDs...))
 	case dst.ScreenName != "":
@@ -182,12 +191,22 @@ func NewDstFromUserID(userIDs ...int64) (dst Destination) {
 	return
 }
 
-// NewDstFromScreenName creates a new MessageConfig instance from userID.
+// NewDstFromScreenName creates a new MessageConfig instance from screenNames.
 func NewDstFromScreenName(screenNames ...string) (dst Destination) {
 	if len(screenNames) == 1 {
 		dst.ScreenName = screenNames[0]
 	} else {
 		dst.ScreenNames = screenNames
+	}
+	return
+}
+
+// NewDstFromGroupName creates a new MessageConfig instance from groupNames.
+func NewDstFromGroupName(groupNames ...string) (dst Destination) {
+	if len(groupNames) == 1 {
+		dst.GroupName = groupNames[0]
+	} else {
+		dst.GroupNames = groupNames
 	}
 	return
 }
@@ -205,8 +224,12 @@ func NewDstFromChatID(chatID int64) (dst Destination) {
 }
 
 // NewDstFromGroupID creates a new MessageConfig instance from groupID.
-func NewDstFromGroupID(groupID int64) (dst Destination) {
-	dst.GroupID = groupID
+func NewDstFromGroupID(groupIDs ...int64) (dst Destination) {
+	if len(groupIDs) == 1 {
+		dst.GroupID = groupIDs[0]
+	} else {
+		dst.GroupIDs = groupIDs
+	}
 	return
 }
 
