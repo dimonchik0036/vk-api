@@ -17,6 +17,7 @@ const (
 type Wall struct {
 	ID           int64         `json:"id"`
 	OwnerID      int64         `json:"owner_id"`
+	ToID         int64         `json:"to_id"`
 	FromID       int64         `json:"from_id"`
 	Date         int64         `json:"date"`
 	Text         string        `json:"text"`
