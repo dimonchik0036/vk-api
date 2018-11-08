@@ -89,6 +89,96 @@ func (client *Client) GetWall(dst Destination, count int64, offset int64, filter
 	return Answer.Count, Answer.Items, Answer.Profiles, Answer.Groups, nil
 }
 
+type PostConfig struct {
+	OwnerID       int64     `json:"owner_id"`
+	FriendsOnly   int       `json:"friends_only"`
+	FromGroup     int       `json:"from_group"`
+	Attachments   string    `json:"attachments"`
+	Message       string    `json:"message"`
+	Services      string    `json:"services"`
+	PublishDate   Timestamp `json:"publish_date"`
+	Signed        int       `json:"signed"`
+	Geo           bool      `json:"-"`
+	Lat           float64   `json:"lat"`
+	Long          float64   `json:"long"`
+	PlaceID       int64     `json:"place_id"`
+	PostID        int64     `json:"post_id"`
+	Guid          string    `json:"guid"`
+	MarkAsAds     int       `json:"mark_as_ads"`
+	CloseComments int       `json:"close_comments"`
+}
+
+// SetGeo sets the location.
+func (p *PostConfig) SetGeo(lat float64, long float64) {
+	p.Geo = true
+	p.Lat = lat
+	p.Long = long
+}
+
+// PostWall tries to post a message to the wall with a configuration
+// from PostConfig and returns the post id if it succeeds.
+func (client *Client) PostWall(config PostConfig) (int64, *Error) {
+	values := url.Values{}
+	if config.OwnerID != 0 {
+		values.Set("owner_id", ConcatInt64ToString(config.OwnerID))
+	}
+	if config.Message != "" {
+		values.Add("message", config.Message)
+	}
+	if config.Geo {
+		values.Add("lat", strconv.FormatFloat(config.Lat, 'f', -1, 64))
+		values.Add("long", strconv.FormatFloat(config.Long, 'f', -1, 64))
+	}
+	if config.Attachments != "" {
+		values.Add("attachments", config.Attachments)
+	}
+	if config.FriendsOnly != 0 {
+		values.Set("friends_only", string(config.FriendsOnly))
+	}
+	if config.FromGroup != 0 {
+		values.Set("from_group", string(config.FromGroup))
+	}
+	if config.Services != "" {
+		values.Add("services", config.Services)
+	}
+	if config.Signed != 0 {
+		values.Set("signed", string(config.Signed))
+	}
+	if config.PublishDate != 0 {
+		values.Set("publish_date", ConcatInt64ToString(int64(config.PublishDate)))
+	}
+	if config.PlaceID != 0 {
+		values.Set("place_id", ConcatInt64ToString(config.PlaceID))
+	}
+	if config.PostID != 0 {
+		values.Set("post_id", ConcatInt64ToString(config.PostID))
+	}
+	if config.Guid != "" {
+		values.Add("guid", config.Guid)
+	}
+	if config.MarkAsAds != 0 {
+		values.Set("mark_as_ads", string(config.MarkAsAds))
+	}
+	if config.CloseComments != 0 {
+		values.Set("close_comments", string(config.CloseComments))
+	}
+
+	res, err := client.Do(NewRequest("wall.post", "", values))
+	if err != nil {
+		return 0, err
+	}
+
+	Answer := struct {
+		PostID int64 `json:"post_id"`
+	}{}
+
+	if err := res.To(&Answer); err != nil {
+		return 0, NewError(ErrBadCode, err.Error())
+	}
+
+	return Answer.PostID, nil
+}
+
 type Comments struct {
 	Count   int `json:"count"`
 	CanPost int `json:"can_post"`
